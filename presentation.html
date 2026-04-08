@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>年代記 — サービス紹介</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink-0: #0a0806;
+    --ink-1: #1a1510;
+    --ink-2: #2a2018;
+    --ink-3: #3a3228;
+    --paper-0: #fdf6e8;
+    --paper-1: #f5ebd8;
+    --paper-2: #e8d9c0;
+    --paper-3: #d4c4a0;
+    --vermilion: #8b2020;
+    --vermilion-light: #b83030;
+    --gold: #c5a028;
+    --sepia: #9a7e60;
+  }
+
+  body {
+    font-family: 'Noto Serif JP', serif;
+    background: #333;
+    width: 297mm;
+    margin: 0 auto;
+  }
+
+  .slide {
+    width: 297mm;
+    height: 210mm;
+    background: var(--ink-0);
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── 共通装飾 ── */
+  .slide-border {
+    position: absolute;
+    inset: 8mm;
+    border: 1px solid rgba(197,160,40,0.25);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .slide-border::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 0.5px solid rgba(197,160,40,0.12);
+  }
+  .corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--gold);
+    border-style: solid;
+    opacity: 0.6;
+  }
+  .c-tl { top: -1px; left: -1px; border-width: 1.5px 0 0 1.5px; }
+  .c-tr { top: -1px; right: -1px; border-width: 1.5px 1.5px 0 0; }
+  .c-bl { bottom: -1px; left: -1px; border-width: 0 0 1.5px 1.5px; }
+  .c-br { bottom: -1px; right: -1px; border-width: 0 1.5px 1.5px 0; }
+
+  .slide-number {
+    position: absolute;
+    bottom: 10mm;
+    right: 14mm;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 7pt;
+    color: rgba(197,160,40,0.4);
+    letter-spacing: 0.2em;
+    z-index: 20;
+  }
+
+  /* ── スライド 1: タイトル ── */
+  #s1 {
+    background: linear-gradient(135deg, #0a0806 0%, #1a1208 50%, #0e0c06 100%);
+    justify-content: center;
+    align-items: center;
+  }
+  #s1 .bg-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(197,160,40,1) 20px,
+      rgba(197,160,40,1) 21px
+    );
+  }
+  #s1 .vertical-line {
+    position: absolute;
+    left: 50%;
+    top: 22mm;
+    bottom: 22mm;
+    width: 0.5px;
+    background: linear-gradient(to bottom, transparent, rgba(197,160,40,0.3) 20%, rgba(197,160,40,0.3) 80%, transparent);
+  }
+  #s1 .left-content {
+    width: 45%;
+    padding-right: 20mm;
+    text-align: right;
+    z-index: 5;
+  }
+  #s1 .right-content {
+    width: 55%;
+    padding-left: 20mm;
+    z-index: 5;
+  }
+  #s1 .main-title {
+    font-size: 52pt;
+    font-weight: 700;
+    color: var(--paper-1);
+    line-height: 1.1;
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 40px rgba(197,160,40,0.2);
+  }
+  #s1 .sub-title {
+    font-size: 11pt;
+    color: var(--gold);
+    letter-spacing: 0.4em;
+    margin-top: 4mm;
+    font-weight: 300;
+  }
+  #s1 .tagline {
+    font-size: 13pt;
+    color: var(--paper-2);
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+    font-weight: 300;
+    margin-bottom: 8mm;
+  }
+  #s1 .service-label {
+    display: inline-block;
+    border: 1px solid rgba(139,32,32,0.6);
+    color: var(--vermilion-light);
+    padding: 2mm 6mm;
+    font-size: 7pt;
+    letter-spacing: 0.3em;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ── スライド 2: 概要 ── */
+  .standard-slide {
+    padding: 14mm 18mm;
+  }
+  .slide-header {
+    display: flex;
+    align-items: baseline;
+    gap: 6mm;
+    margin-bottom: 8mm;
+    padding-bottom: 4mm;
+    border-bottom: 1px solid rgba(197,160,40,0.2);
+  }
+  .slide-en {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 7pt;
+    color: var(--gold);
+    letter-spacing: 0.35em;
+    font-weight: 300;
+  }
+  .slide-title {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--paper-1);
+    letter-spacing: 0.1em;
+  }
+  .accent-line {
+    width: 20mm;
+    height: 1.5px;
+    background: linear-gradient(to right, var(--vermilion), transparent);
+    margin: 3mm 0 7mm 0;
+  }
+
+  /* 概要カード */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5mm;
+    margin-top: 4mm;
+  }
+  .ov-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(197,160,40,0.15);
+    border-left: 3px solid var(--vermilion);
+    padding: 5mm 6mm;
+  }
+  .ov-card-title {
+    font-size: 9pt;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 2mm;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+  }
+  .ov-card-body {
+    font-size: 9pt;
+    color: var(--paper-2);
+    line-height: 1.8;
+    font-weight: 300;
+  }
+  .concept-box {
+    background: rgba(139,32,32,0.08);
+    border: 1px solid rgba(139,32,32,0.25);
+    padding: 5mm 8mm;
+    margin-bottom: 6mm;
+  }
+  .concept-text {
+    font-size: 11pt;
+    color: var(--paper-1);
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+  }
+  .concept-text em {
+    color: var(--vermilion-light);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ── スライド 3: データ ── */
+  .data-stats {
+    display: flex;
+    gap: 6mm;
+    margin-bottom: 8mm;
+  }
+  .stat-box {
+    flex: 1;
+    background: rgba(197,160,40,0.05);
+    border: 1px solid rgba(197,160,40,0.2);
+    padding: 5mm;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 32pt;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    display: block;
+  }
+  .stat-unit {
+    font-size: 9pt;
+    color: var(--sepia);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-top: 1mm;
+  }
+  .stat-label {
+    font-size: 7pt;
+    color: var(--paper-3);
+    margin-top: 2mm;
+    display: block;
+    letter-spacing: 0.1em;
+  }
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3mm;
+  }
+  .cat-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 3mm 4mm;
+    text-align: center;
+  }
+  .cat-name {
+    font-size: 9pt;
+    color: var(--paper-2);
+    display: block;
+    letter-spacing: 0.05em;
+  }
+  .cat-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 2mm;
+    vertical-align: middle;
+  }
+
+  /* ── スライド 4: 年表作成 ── */
+  .feature-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 8mm;
+    flex: 1;
+  }
+  .feature-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+  }
+  .step {
+    display: flex;
+    gap: 4mm;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 7mm;
+    height: 7mm;
+    background: var(--vermilion);
+    color: var(--paper-1);
+    font-size: 8pt;
+    font-family: 'Noto Sans JP', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .step-body { flex: 1; }
+  .step-title {
+    font-size: 9.5pt;
+    color: var(--paper-1);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin-bottom: 1mm;
+  }
+  .step-desc {
+    font-size: 8pt;
+    color: var(--sepia);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* モック画面 */
+  .mock-screen {
+    background: #0f0c08;
+    border: 1px solid rgba(197,160,40,0.2);
+    padding: 4mm;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2mm;
+  }
+  .mock-header {
+    background: rgba(197,160,40,0.08);
+    padding: 2mm 3mm;
+    font-size: 7pt;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    font-family: 'Noto Sans JP', sans-serif;
+    border-bottom: 1px solid rgba(197,160,40,0.15);
+  }
+  .mock-event {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    padding: 2mm 2mm;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .mock-year {
+    font-size: 7pt;
+    color: var(--vermilion-light);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    width: 16mm;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+  .mock-cat {
+    font-size: 6pt;
+    padding: 0.5mm 2mm;
+    border: 1px solid;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .mock-cat.seiji { color: #6090d0; border-color: rgba(96,144,208,0.4); }
+  .mock-cat.bunka { color: #d0a040; border-color: rgba(208,160,64,0.4); }
+  .mock-cat.jinbutsu { color: #80c080; border-color: rgba(128,192,128,0.4); }
+  .mock-cat.hatsumei { color: #c080c0; border-color: rgba(192,128,192,0.4); }
+  .mock-cat.sakuhin { color: #c09060; border-color: rgba(192,144,96,0.4); }
+  .mock-title {
+    font-size: 8pt;
+    color: var(--paper-2);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── スライド 5: 公開・発見 ── */
+  .timeline-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4mm;
+    margin-top: 4mm;
+  }
+  .tl-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(197,160,40,0.15);
+    padding: 5mm;
+  }
+  .tl-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3mm;
+  }
+  .tl-card-name {
+    font-size: 9pt;
+    color: var(--paper-1);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+  }
+  .tl-badge {
+    font-size: 6pt;
+    padding: 0.5mm 2mm;
+    background: rgba(139,32,32,0.3);
+    color: var(--vermilion-light);
+    border: 1px solid rgba(139,32,32,0.4);
+    letter-spacing: 0.1em;
+    font-family: 'Noto Sans JP', sans-serif;
+    white-space: nowrap;
+  }
+  .tl-card-count {
+    font-size: 8pt;
+    color: var(--sepia);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.1em;
+  }
+  .tl-card-count span {
+    font-size: 14pt;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .section-label {
+    font-size: 7pt;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    font-family: 'Noto Sans JP', sans-serif;
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid rgba(197,160,40,0.15);
+  }
+  .priv-badge {
+    font-size: 6pt;
+    padding: 0.5mm 2mm;
+    background: rgba(197,160,40,0.1);
+    color: var(--gold);
+    border: 1px solid rgba(197,160,40,0.3);
+    letter-spacing: 0.1em;
+    font-family: 'Noto Sans JP', sans-serif;
+    white-space: nowrap;
+  }
+  .pub-section { margin-top: 5mm; }
+
+  /* ── スライド 6: 比較 ── */
+  .compare-mock {
+    background: #0f0c08;
+    border: 1px solid rgba(197,160,40,0.2);
+    padding: 4mm;
+    margin-top: 4mm;
+    flex: 1;
+  }
+  .compare-header-row {
+    display: flex;
+    border-bottom: 1px solid rgba(197,160,40,0.2);
+    padding-bottom: 2mm;
+    margin-bottom: 2mm;
+  }
+  .ch-year { width: 18mm; font-size: 7pt; color: var(--sepia); font-family: 'Noto Sans JP', sans-serif; letter-spacing: 0.1em; }
+  .ch-col {
+    flex: 1;
+    font-size: 6.5pt;
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.05em;
+    padding: 1mm 2mm;
+    text-align: center;
+    border-radius: 1px;
+  }
+  .compare-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 2.5mm 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .cr-year {
+    width: 18mm;
+    font-size: 8pt;
+    color: var(--vermilion-light);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    padding-top: 0.5mm;
+    flex-shrink: 0;
+  }
+  .cr-cell {
+    flex: 1;
+    font-size: 7pt;
+    padding: 1mm 2mm;
+    margin: 0 1mm;
+    line-height: 1.5;
+    min-height: 8mm;
+    border-radius: 1px;
+  }
+  .col-a { background: rgba(96,144,208,0.08); color: #8aafdc; border-left: 2px solid rgba(96,144,208,0.4); }
+  .col-b { background: rgba(208,160,64,0.08); color: #d4b060; border-left: 2px solid rgba(208,160,64,0.4); }
+  .col-c { background: rgba(128,192,128,0.08); color: #90c890; border-left: 2px solid rgba(128,192,128,0.4); }
+  .compare-note {
+    font-size: 8pt;
+    color: var(--sepia);
+    line-height: 1.8;
+    font-weight: 300;
+    margin-top: 4mm;
+  }
+
+  /* ── スライド 7: 技術 ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5mm;
+    margin-top: 4mm;
+  }
+  .tech-block {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 5mm;
+  }
+  .tech-block-title {
+    font-size: 8pt;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid rgba(197,160,40,0.15);
+  }
+  .tech-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5mm 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .tech-name {
+    font-size: 8.5pt;
+    color: var(--paper-2);
+    letter-spacing: 0.03em;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .tech-ver {
+    font-size: 7pt;
+    color: var(--sepia);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.05em;
+  }
+  .tech-role {
+    font-size: 7pt;
+    color: rgba(197,160,40,0.6);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.05em;
+  }
+  .arch-note {
+    margin-top: 5mm;
+    background: rgba(139,32,32,0.06);
+    border: 1px solid rgba(139,32,32,0.2);
+    padding: 4mm 6mm;
+  }
+  .arch-text {
+    font-size: 8pt;
+    color: var(--paper-2);
+    line-height: 1.9;
+    font-weight: 300;
+  }
+
+  /* ── スライド 8: まとめ ── */
+  #s8 {
+    background: linear-gradient(160deg, #0a0806 0%, #120e08 60%, #0a0806 100%);
+    justify-content: center;
+    align-items: center;
+  }
+  #s8 .center-content {
+    z-index: 5;
+    text-align: center;
+    max-width: 200mm;
+  }
+  #s8 .closing-ja {
+    font-size: 18pt;
+    color: var(--paper-1);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 5mm;
+  }
+  #s8 .closing-sub {
+    font-size: 9.5pt;
+    color: var(--paper-2);
+    line-height: 2.0;
+    letter-spacing: 0.1em;
+    font-weight: 300;
+    margin-bottom: 10mm;
+  }
+  .use-case-row {
+    display: flex;
+    gap: 5mm;
+    justify-content: center;
+    margin-bottom: 10mm;
+  }
+  .use-case {
+    background: rgba(197,160,40,0.06);
+    border: 1px solid rgba(197,160,40,0.2);
+    padding: 4mm 6mm;
+    text-align: center;
+    min-width: 42mm;
+  }
+  .use-icon {
+    font-size: 16pt;
+    margin-bottom: 2mm;
+    display: block;
+  }
+  .use-label {
+    font-size: 8pt;
+    color: var(--paper-2);
+    letter-spacing: 0.1em;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  #s8 .url-box {
+    border: 1px solid rgba(197,160,40,0.3);
+    padding: 3mm 10mm;
+    display: inline-block;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10pt;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+  .divider-gold {
+    width: 40mm;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    margin: 5mm auto;
+  }
+
+  @media print {
+    body { background: none; }
+    .slide { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SLIDE 1 ═══════════════ -->
+<div class="slide" id="s1">
+  <div class="bg-pattern"></div>
+  <div class="vertical-line"></div>
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div style="display:flex; align-items:center; justify-content:center; height:100%; position:relative; z-index:5;">
+    <div class="left-content">
+      <div class="main-title">年代記</div>
+      <div class="sub-title">CHRONOS TIMELINE</div>
+    </div>
+    <div class="right-content">
+      <div class="service-label">サービス紹介</div>
+      <div style="margin-top:6mm;"></div>
+      <div class="tagline">
+        歴史のイベントを選び、<br>
+        自分だけの年表をつくる。<br>
+        比べて、発見する。
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2mm;">
+        <div style="font-size:8pt; color:var(--sepia); letter-spacing:0.1em; font-family:'Noto Sans JP',sans-serif;">
+          ■ 1,500件超の精選イベントデータ
+        </div>
+        <div style="font-size:8pt; color:var(--sepia); letter-spacing:0.1em; font-family:'Noto Sans JP',sans-serif;">
+          ■ 個人年表の作成・保存・公開
+        </div>
+        <div style="font-size:8pt; color:var(--sepia); letter-spacing:0.1em; font-family:'Noto Sans JP',sans-serif;">
+          ■ 複数年表の横断比較
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">1 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 2 ═══════════════ -->
+<div class="slide standard-slide">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">SERVICE OVERVIEW</div>
+      <div class="slide-title">サービス概要</div>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <div class="concept-text">
+      「年代記」は、<em>歴史・文化・科学・人物</em>にまたがる精選イベントライブラリから<br>
+      自由にイベントを選んで<em>オリジナルの年表</em>を作成・公開できるWebサービスです。
+    </div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="ov-card">
+      <div class="ov-card-title">📚 豊富な歴史イベントライブラリ</div>
+      <div class="ov-card-body">1,500件超の精選イベントを収録。政治・文化・発明・人物・創作物など多彩なカテゴリから自分のテーマに合うイベントを選択できます。</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title">✍️ 自分だけの年表を作成</div>
+      <div class="ov-card-body">イベントを選んで並べるだけで、テーマに沿った年表が完成。名前をつけて保存し、公開・非公開を自由に切り替えられます。</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title">🌐 公開年表の閲覧・発見</div>
+      <div class="ov-card-body">他ユーザーが公開した年表を自由に閲覧。歴史の新しい見方や、思いがけないテーマの年表との出会いがあります。</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title">🔍 複数年表の横断比較</div>
+      <div class="ov-card-body">最大6つの年表を横に並べて同時比較。「音楽の歴史」と「戦争の歴史」を並べれば、時代の重なりが一目で見えてきます。</div>
+    </div>
+  </div>
+
+  <div class="slide-number">2 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 3 ═══════════════ -->
+<div class="slide standard-slide">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">EVENT LIBRARY</div>
+      <div class="slide-title">イベントライブラリ</div>
+    </div>
+  </div>
+
+  <div class="data-stats">
+    <div class="stat-box">
+      <span class="stat-num">1,500<span style="font-size:18pt;">+</span></span>
+      <span class="stat-unit">件</span>
+      <span class="stat-label">総イベント数</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">8</span>
+      <span class="stat-unit">カテゴリ</span>
+      <span class="stat-label">メインカテゴリ数</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">-35000</span>
+      <span class="stat-unit">年〜現代</span>
+      <span class="stat-label">カバー年代</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">221</span>
+      <span class="stat-unit">件</span>
+      <span class="stat-label">発明・伝播イベント</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:3mm;">
+    <div class="section-label">カテゴリ一覧</div>
+  </div>
+  <div class="category-grid">
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#6090d0;"></span>政治</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">制度・戦争・外交</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#d0a040;"></span>文化</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">芸術・思想・宗教</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#c080c0;"></span>発明・伝播</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">技術・農業・航海・言語</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#80c080;"></span>人物</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">歴史的人物530人+</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#c09060;"></span>創作物</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">文学・音楽・映画・ゲーム</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#5080a0;"></span>経済</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">貿易・通貨・産業</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#8060a0;"></span>天災</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">地震・津波・疫病</div>
+    </div>
+    <div class="cat-item">
+      <span class="cat-name"><span class="cat-dot" style="background:#a06040;"></span>外交</span>
+      <div style="font-size:7pt; color:var(--sepia); margin-top:1mm; font-family:'Noto Sans JP',sans-serif;">条約・同盟・国交</div>
+    </div>
+  </div>
+
+  <div class="slide-number">3 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 4 ═══════════════ -->
+<div class="slide standard-slide" style="display:flex; flex-direction:column;">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">TIMELINE CREATION</div>
+      <div class="slide-title">年表の作成</div>
+    </div>
+  </div>
+
+  <div class="feature-layout" style="flex:1;">
+    <div class="feature-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">カテゴリでフィルタリング</div>
+          <div class="step-desc">8つのカテゴリボタンでイベントを絞り込み。「人物だけ」「発明だけ」を表示してテーマを絞れます。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">イベントを追加</div>
+          <div class="step-desc">「＋」ボタンで1件ずつ追加、または「全追加」でフィルタ済み全件を一括追加。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">年表を整理・保存</div>
+          <div class="step-desc">不要なイベントを削除して整理。タイトルをつけて保存。複数の年表を持つことが可能。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">公開設定</div>
+          <div class="step-desc">「公開」にすると全ユーザーが閲覧可能に。プライベートは自分だけが見えます。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mock-screen">
+      <div class="mock-header">▌ 年表エディタ — 「近現代の発明史」</div>
+      <div class="mock-event">
+        <div class="mock-year">1903年</div>
+        <div class="mock-cat hatsumei">発明・伝播</div>
+        <div class="mock-title">ライト兄弟の動力飛行</div>
+      </div>
+      <div class="mock-event">
+        <div class="mock-year">1927年</div>
+        <div class="mock-cat hatsumei">発明・伝播</div>
+        <div class="mock-title">リンドバーグ大西洋横断</div>
+      </div>
+      <div class="mock-event">
+        <div class="mock-year">1957年</div>
+        <div class="mock-cat seiji">政治</div>
+        <div class="mock-title">スプートニク打ち上げ</div>
+      </div>
+      <div class="mock-event">
+        <div class="mock-year">1964年</div>
+        <div class="mock-cat hatsumei">発明・伝播</div>
+        <div class="mock-title">新幹線の開業</div>
+      </div>
+      <div class="mock-event">
+        <div class="mock-year">1991年</div>
+        <div class="mock-cat hatsumei">発明・伝播</div>
+        <div class="mock-title">Unicode 1.0 の公開</div>
+      </div>
+      <div class="mock-event">
+        <div class="mock-year">2015年</div>
+        <div class="mock-cat hatsumei">発明・伝播</div>
+        <div class="mock-title">SpaceX ロケット垂直着陸</div>
+      </div>
+      <div style="padding:2mm; font-size:7pt; color:rgba(197,160,40,0.4); font-family:'Noto Sans JP',sans-serif; text-align:center; margin-top:auto;">
+        ● 公開設定：公開中　● 6件収録
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">4 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 5 ═══════════════ -->
+<div class="slide standard-slide">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">DISCOVER & SHARE</div>
+      <div class="slide-title">公開・発見</div>
+    </div>
+  </div>
+
+  <div style="font-size:9pt; color:var(--paper-2); line-height:1.9; font-weight:300; margin-bottom:5mm;">
+    他のユーザーが公開した年表を自由に閲覧できる「年表広場」機能。<br>
+    自分では思いつかないテーマの年表が、新たな歴史の見方を提供します。
+  </div>
+
+  <div class="section-label">自分の年表</div>
+  <div class="timeline-cards">
+    <div class="tl-card">
+      <div class="tl-card-top">
+        <div class="tl-card-name">近現代の発明史</div>
+        <div class="priv-badge">非公開</div>
+      </div>
+      <div class="tl-card-count"><span>12</span> 件</div>
+    </div>
+    <div class="tl-card">
+      <div class="tl-card-top">
+        <div class="tl-card-name">文字と言語の歴史</div>
+        <div class="tl-badge">公開中</div>
+      </div>
+      <div class="tl-card-count"><span>18</span> 件</div>
+    </div>
+    <div class="tl-card">
+      <div class="tl-card-top">
+        <div class="tl-card-name">日本の政治史</div>
+        <div class="tl-badge">公開中</div>
+      </div>
+      <div class="tl-card-count"><span>24</span> 件</div>
+    </div>
+  </div>
+
+  <div class="pub-section">
+    <div class="section-label">みんなの公開年表</div>
+    <div class="timeline-cards">
+      <div class="tl-card">
+        <div class="tl-card-top">
+          <div class="tl-card-name">音楽と戦争の交差点</div>
+          <div class="tl-badge">公開中</div>
+        </div>
+        <div class="tl-card-count"><span>31</span> 件</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-card-top">
+          <div class="tl-card-name">SF文学と実際の発明</div>
+          <div class="tl-badge">公開中</div>
+        </div>
+        <div class="tl-card-count"><span>20</span> 件</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-card-top">
+          <div class="tl-card-name">食の世界史</div>
+          <div class="tl-badge">公開中</div>
+        </div>
+        <div class="tl-card-count"><span>15</span> 件</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">5 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 6 ═══════════════ -->
+<div class="slide standard-slide" style="display:flex; flex-direction:column;">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">TIMELINE COMPARISON</div>
+      <div class="slide-title">年表の比較</div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1.8fr; gap:8mm; flex:1;">
+    <div>
+      <div style="font-size:9pt; color:var(--paper-2); line-height:1.9; font-weight:300; margin-bottom:4mm;">
+        最大<strong style="color:var(--gold);">6つ</strong>の年表を同時に横並び表示。縦軸を「年代」、横軸を「年表」として比較することで、歴史の共鳴・因果関係を視覚的に発見できます。
+      </div>
+      <div style="font-size:8pt; color:var(--sepia); line-height:2.0; font-weight:300;">
+        ▸ 音楽と政治革命が同じ年代に集中している<br>
+        ▸ 大きな戦争の直後に文化が開花する<br>
+        ▸ 技術革新が50年後の社会変革を準備している<br>
+        ▸ 東西で同時代に同種の発明が起きている
+      </div>
+    </div>
+
+    <div class="compare-mock">
+      <div class="compare-header-row">
+        <div class="ch-year">年代</div>
+        <div class="ch-col col-a">発明の歴史</div>
+        <div class="ch-col col-b">音楽の歴史</div>
+        <div class="ch-col col-c">戦争の歴史</div>
+      </div>
+      <div class="compare-row">
+        <div class="cr-year">1903</div>
+        <div class="cr-cell col-a">ライト兄弟<br>初飛行</div>
+        <div class="cr-cell col-b"></div>
+        <div class="cr-cell col-c"></div>
+      </div>
+      <div class="compare-row">
+        <div class="cr-year">1914</div>
+        <div class="cr-cell col-a">パナマ運河<br>開通</div>
+        <div class="cr-cell col-b"></div>
+        <div class="cr-cell col-c">第一次<br>世界大戦</div>
+      </div>
+      <div class="compare-row">
+        <div class="cr-year">1944</div>
+        <div class="cr-cell col-a">ジェット機<br>実用化</div>
+        <div class="cr-cell col-b">ビバップ<br>ジャズ誕生</div>
+        <div class="cr-cell col-c">ノルマンディー<br>上陸作戦</div>
+      </div>
+      <div class="compare-row">
+        <div class="cr-year">1964</div>
+        <div class="cr-cell col-a">新幹線<br>開業</div>
+        <div class="cr-cell col-b">ビートルズ<br>全米席巻</div>
+        <div class="cr-cell col-c">ベトナム<br>戦争激化</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">6 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 7 ═══════════════ -->
+<div class="slide standard-slide">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+
+  <div class="slide-header">
+    <div>
+      <div class="slide-en">TECHNOLOGY STACK</div>
+      <div class="slide-title">技術スタック</div>
+    </div>
+  </div>
+
+  <div class="tech-grid">
+    <div class="tech-block">
+      <div class="tech-block-title">FRONTEND</div>
+      <div class="tech-row">
+        <span class="tech-name">Next.js（App Router）</span>
+        <span class="tech-ver">v14</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">React</span>
+        <span class="tech-ver">v18.3</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">TypeScript</span>
+        <span class="tech-ver">v5.6</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">Tailwind CSS</span>
+        <span class="tech-ver">v3.4</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">Noto Serif JP</span>
+        <span class="tech-role">和文フォント</span>
+      </div>
+    </div>
+
+    <div class="tech-block">
+      <div class="tech-block-title">BACKEND / DATABASE</div>
+      <div class="tech-row">
+        <span class="tech-name">Supabase</span>
+        <span class="tech-role">認証 + PostgreSQL</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">Supabase SSR</span>
+        <span class="tech-role">サーバーサイド認証</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">Next.js Middleware</span>
+        <span class="tech-role">ルート保護</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">timelines テーブル</span>
+        <span class="tech-role">年表メタデータ</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-name">timeline_events テーブル</span>
+        <span class="tech-role">年表内イベント</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-note">
+    <div class="arch-text">
+      イベントライブラリは TypeScript ファイルとして管理（events.ts）。サーバーサイドレンダリングと組み合わせることで高速な初期表示を実現。認証はメール認証＋セッション管理により、ユーザーデータの安全な分離を保証。
+    </div>
+  </div>
+
+  <div class="slide-number">7 / 8</div>
+</div>
+
+<!-- ═══════════════ SLIDE 8 ═══════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-border">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+  </div>
+  <div style="position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(197,160,40,0.04) 0%, transparent 70%);"></div>
+
+  <div class="center-content">
+    <div style="font-size:8pt; color:var(--gold); letter-spacing:0.5em; font-family:'Noto Sans JP',sans-serif; margin-bottom:6mm;">
+      CHRONOS TIMELINE
+    </div>
+    <div class="closing-ja">歴史を、自分の目線で。</div>
+    <div class="divider-gold"></div>
+    <div class="closing-sub">
+      知識として「知っている」歴史から、<br>
+      自分のストーリーとして「語れる」歴史へ。
+    </div>
+
+    <div class="use-case-row">
+      <div class="use-case">
+        <span class="use-icon">🎓</span>
+        <div class="use-label">学習・受験対策<br>の年表整理</div>
+      </div>
+      <div class="use-case">
+        <span class="use-icon">✍️</span>
+        <div class="use-label">読書・映画の<br>テーマ年表</div>
+      </div>
+      <div class="use-case">
+        <span class="use-icon">🔭</span>
+        <div class="use-label">歴史の趣味・<br>研究メモ</div>
+      </div>
+      <div class="use-case">
+        <span class="use-icon">🤝</span>
+        <div class="use-label">年表の共有・<br>他者と発見</div>
+      </div>
+    </div>
+
+    <div class="url-box">年代記 — CHRONOS TIMELINE</div>
+  </div>
+
+  <div class="slide-number">8 / 8</div>
+</div>
+
+</body>
+</html>
