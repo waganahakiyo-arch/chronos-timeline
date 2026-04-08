@@ -13,7 +13,10 @@
   --sepia-700: #3a2d1c;
 }
 
-html,
+html {
+  font-size: 106.25%; /* 16px → 17px */
+}
+
 body {
   background-color: var(--ink-900);
   color: var(--paper-100);

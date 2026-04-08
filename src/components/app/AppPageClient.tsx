@@ -663,13 +663,13 @@ export default function AppPageClient() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* カテゴリフィルター */}
           <div className="flex items-center gap-2 px-5 py-3 bg-ink-800/50 border-b border-sepia-700/20 flex-shrink-0 flex-wrap">
-            <span className="text-sepia-500 text-xs tracking-wider mr-1">絞込：</span>
+            <span className="text-sepia-300 text-xs tracking-wider mr-1">絞込：</span>
             <button
               onClick={() => handleCategoryFilter(null)}
               className={`px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
                 !categoryFilter
                   ? 'bg-sepia-700/40 border-sepia-600/60 text-paper-200'
-                  : 'border-sepia-700/30 text-sepia-400 hover:border-sepia-600/50 hover:text-sepia-300'
+                  : 'border-sepia-700/30 text-sepia-300 hover:border-sepia-500/50 hover:text-paper-200'
               }`}
             >
               すべて
@@ -681,7 +681,7 @@ export default function AppPageClient() {
                 className={`px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
                   categoryFilter === cat
                     ? CATEGORY_COLORS[cat]
-                    : 'border-sepia-700/30 text-sepia-400 hover:border-sepia-600/50 hover:text-sepia-300'
+                    : 'border-sepia-700/30 text-sepia-300 hover:border-sepia-500/50 hover:text-paper-200'
                 }`}
               >
                 {cat}
@@ -695,17 +695,17 @@ export default function AppPageClient() {
                     onClick={() => setDateFormat(f)}
                     title={f === 1 ? 'YYYY形式' : f === 2 ? 'YYYY/MM/DD hh:mm形式' : 'MM/DD hh:mm形式'}
                     className={`px-2 py-1 text-[10px] transition-colors ${
-                      dateFormat === f ? 'bg-sepia-700/40 text-paper-200' : 'text-sepia-500 hover:text-sepia-300'
+                      dateFormat === f ? 'bg-sepia-700/40 text-paper-200' : 'text-sepia-300 hover:text-paper-200'
                     }`}
                   >
                     {f === 1 ? '年' : f === 2 ? '日時' : '月日'}
                   </button>
                 ))}
               </div>
-              <span className="text-sepia-600 text-xs">{filteredEvents.length} 件</span>
+              <span className="text-sepia-400 text-xs">{filteredEvents.length} 件</span>
               <button
                 onClick={() => addAllFiltered(filteredEvents)}
-                className="px-3 py-1 text-xs tracking-wider border border-sepia-700/40 text-sepia-400 hover:border-vermilion/50 hover:text-vermilion rounded-sm transition-colors"
+                className="px-3 py-1 text-xs tracking-wider border border-sepia-700/40 text-sepia-300 hover:border-vermilion/50 hover:text-vermilion rounded-sm transition-colors"
                 title="フィルタ中の全件を年表に追加"
               >
                 すべて追加
@@ -784,7 +784,21 @@ export default function AppPageClient() {
                           : `${ev.year}年`}
                       </td>
                       <td className="px-3 py-2 text-paper-200 font-medium relative">
-                        {ev.title}
+                        <div className="flex items-center gap-1.5">
+                          <span>{ev.title}</span>
+                          {ev.isUserEvent && (
+                            <button
+                              onClick={e => {
+                                e.stopPropagation()
+                                if (confirm(`「${ev.title}」を削除しますか？`)) deleteUserEvent(ev.id)
+                              }}
+                              className="flex-shrink-0 text-sepia-600 hover:text-vermilion text-xs opacity-0 group-hover/row:opacity-100 transition-all"
+                              title="削除"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                         {ev.description && (
                           <div className="pointer-events-none absolute left-[20ch] top-full mt-1 z-50 w-80 bg-ink-950 border border-sepia-700/50 rounded-sm px-3 py-2 text-xs text-sepia-300 leading-relaxed shadow-lg opacity-0 group-hover/row:opacity-100 transition-opacity duration-150">
                             {ev.description}
@@ -811,15 +825,6 @@ export default function AppPageClient() {
                       </td>
                       <td className="px-3 py-2 text-center">
                         {added && <span className="text-vermilion text-xs">✓</span>}
-                        {ev.isUserEvent && !added && (
-                          <button
-                            onClick={e => { e.stopPropagation(); deleteUserEvent(ev.id) }}
-                            className="text-sepia-600 hover:text-vermilion text-xs opacity-0 group-hover/row:opacity-100 transition-all"
-                            title="削除"
-                          >
-                            ✕
-                          </button>
-                        )}
                       </td>
                     </tr>
                   )
