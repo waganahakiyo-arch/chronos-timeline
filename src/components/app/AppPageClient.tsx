@@ -56,6 +56,8 @@ export default function AppPageClient() {
   const [userEvents, setUserEvents] = useState<UserEvent[]>([])
   const importFileRef = useRef<HTMLInputElement>(null)
   const [dateFormat, setDateFormat] = useState<1|2|3>(1)
+  // モバイル用パネル切り替え
+  const [leftOpen, setLeftOpen] = useState(true)
 
   // ─── 初期化 ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -100,6 +102,7 @@ export default function AppPageClient() {
       .order('year', { ascending: true })
     setCurrentEvents(data ?? [])
     setShowSavedList(false)
+    setLeftOpen(false)
   }
 
   const newTimeline = () => {
@@ -109,6 +112,7 @@ export default function AppPageClient() {
     setPublicUntil(null)
     setCurrentEvents([])
     setShowSavedList(false)
+    setLeftOpen(true)
   }
 
   const addEvent = (ev: MasterEvent) => {
@@ -388,28 +392,28 @@ export default function AppPageClient() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-ink-900">
       {/* ヘッダー */}
-      <header className="flex items-center justify-between px-6 py-3 bg-ink-950 border-b border-sepia-700/30 flex-shrink-0">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3 bg-ink-950 border-b border-sepia-700/30 flex-shrink-0">
+        <div className="flex items-center gap-3">
           <span className="text-vermilion text-xl select-none">✦</span>
-          <h1 className="text-lg font-bold tracking-widest text-paper-100">年代記</h1>
+          <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
           <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">歴史年表アーカイブ</span>
         </div>
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4 md:gap-6">
           <Link
             href="/timelines"
-            className="text-sepia-300 hover:text-paper-100 text-sm tracking-wider transition-colors"
+            className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors"
           >
             年表一覧
           </Link>
           <Link
             href="/compare"
-            className="text-sepia-300 hover:text-paper-100 text-sm tracking-wider transition-colors"
+            className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors"
           >
             比較
           </Link>
           <button
             onClick={signOut}
-            className="text-sepia-400 hover:text-vermilion text-sm tracking-wider transition-colors"
+            className="text-sepia-400 hover:text-vermilion text-xs md:text-sm tracking-wider transition-colors"
           >
             退出
           </button>
@@ -419,7 +423,7 @@ export default function AppPageClient() {
       {/* メインエリア */}
       <div className="flex flex-1 overflow-hidden">
         {/* ─── 左パネル：年表エディタ ─────────────────────────────── */}
-        <aside className="w-80 flex-shrink-0 bg-ink-800 border-r border-sepia-700/30 flex flex-col">
+        <aside className={`${leftOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 md:flex-shrink-0 bg-ink-800 border-r border-sepia-700/30`}>
           {/* タイトル入力 */}
           <div className="p-4 border-b border-sepia-700/30">
             <div className="flex items-center gap-2 mb-3">
@@ -527,6 +531,13 @@ export default function AppPageClient() {
             {statusMsg && (
               <p className="mt-2 text-xs text-center text-vermilion animate-fadeIn">{statusMsg}</p>
             )}
+            {/* モバイル：右パネルへ切り替え */}
+            <button
+              onClick={() => setLeftOpen(false)}
+              className="mt-2 md:hidden w-full py-2 text-xs tracking-wider border border-sepia-700/40 text-sepia-300 hover:border-vermilion/50 hover:text-vermilion rounded-sm transition-colors"
+            >
+              イベントを追加 →
+            </button>
           </div>
 
           {/* 年表イベントリスト */}
@@ -660,13 +671,28 @@ export default function AppPageClient() {
         </aside>
 
         {/* ─── 右パネル：歴史事件リスト ───────────────────────────── */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* カテゴリフィルター */}
-          <div className="flex items-center gap-2 px-5 py-3 bg-ink-800/50 border-b border-sepia-700/20 flex-shrink-0 flex-wrap">
-            <span className="text-sepia-300 text-xs tracking-wider mr-1">絞込：</span>
+        <main className={`${leftOpen ? 'hidden' : 'flex'} md:flex flex-1 flex-col overflow-hidden`}>
+          {/* モバイル：左パネルへ戻るボタン + カテゴリフィルター */}
+          <div className="flex-shrink-0 bg-ink-800/50 border-b border-sepia-700/20">
+            {/* モバイル用上部バー */}
+            <div className="flex items-center gap-2 px-3 py-2 md:hidden border-b border-sepia-700/15">
+              <button
+                onClick={() => setLeftOpen(true)}
+                className="flex items-center gap-1.5 text-sepia-300 hover:text-paper-100 text-xs tracking-wider transition-colors"
+              >
+                ← 年表
+              </button>
+              {timelineName && (
+                <span className="text-paper-200 text-xs truncate flex-1 text-center">{timelineName}</span>
+              )}
+              <span className="text-sepia-500 text-xs">{filteredEvents.length}件</span>
+            </div>
+            {/* カテゴリフィルター */}
+            <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
+            <span className="text-sepia-300 text-xs tracking-wider mr-1 flex-shrink-0">絞込：</span>
             <button
               onClick={() => handleCategoryFilter(null)}
-              className={`px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
+              className={`flex-shrink-0 px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
                 !categoryFilter
                   ? 'bg-sepia-700/40 border-sepia-600/60 text-paper-200'
                   : 'border-sepia-700/30 text-sepia-300 hover:border-sepia-500/50 hover:text-paper-200'
@@ -678,7 +704,7 @@ export default function AppPageClient() {
               <button
                 key={cat}
                 onClick={() => handleCategoryFilter(cat === categoryFilter ? null : cat)}
-                className={`px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
+                className={`flex-shrink-0 px-3 py-1 rounded-sm text-xs tracking-wider border transition-colors ${
                   categoryFilter === cat
                     ? CATEGORY_COLORS[cat]
                     : 'border-sepia-700/30 text-sepia-300 hover:border-sepia-500/50 hover:text-paper-200'
@@ -687,7 +713,7 @@ export default function AppPageClient() {
                 {cat}
               </button>
             ))}
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex-shrink-0 hidden md:flex items-center gap-3">
               <div className="flex border border-sepia-700/40 rounded-sm overflow-hidden" title="日付表示形式">
                 {([1, 2, 3] as const).map(f => (
                   <button
@@ -711,11 +737,12 @@ export default function AppPageClient() {
                 すべて追加
               </button>
             </div>
+            </div>
           </div>
 
           {/* キーワードフィルター */}
           {availableKeywords.length > 0 && (
-            <div className="px-5 py-2 bg-ink-800/30 border-b border-sepia-700/15 flex-shrink-0">
+            <div className="px-3 md:px-5 py-2 bg-ink-800/30 border-b border-sepia-700/15 flex-shrink-0">
               <button
                 onClick={() => setKeywordBarOpen(o => !o)}
                 className="text-sepia-500 text-xs tracking-wider mr-1 hover:text-sepia-300 transition-colors flex items-center gap-1 mb-1"
@@ -759,9 +786,9 @@ export default function AppPageClient() {
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10 bg-ink-900">
                 <tr className="border-b border-sepia-700/30 text-left text-xs text-sepia-500 tracking-wider">
-                  <th className="px-4 py-2 font-normal w-24">年</th>
-                  <th className="px-3 py-2 font-normal">事件名</th>
-                  <th className="px-3 py-2 font-normal">カテゴリ・キーワード</th>
+                  <th className="px-3 md:px-4 py-2 font-normal w-16 md:w-24">年</th>
+                  <th className="px-2 md:px-3 py-2 font-normal">事件名</th>
+                  <th className="px-3 py-2 font-normal hidden md:table-cell">カテゴリ・キーワード</th>
                   <th className="px-3 py-2 font-normal w-8"></th>
                 </tr>
               </thead>
@@ -778,14 +805,14 @@ export default function AppPageClient() {
                           : 'hover:bg-ink-700/60 cursor-pointer'
                       }`}
                     >
-                      <td className="px-4 py-2 tabular-nums text-green-400 font-bold whitespace-nowrap">
+                      <td className="px-3 md:px-4 py-2.5 md:py-2 tabular-nums text-green-400 font-bold whitespace-nowrap text-xs md:text-sm">
                         {ev.event_date && dateFormat !== 1
                           ? (dateFormat === 2 ? ev.event_date : ev.event_date.slice(5))
                           : `${ev.year}年`}
                       </td>
-                      <td className="px-3 py-2 text-paper-200 font-medium relative">
+                      <td className="px-2 md:px-3 py-2.5 md:py-2 text-paper-200 font-medium relative">
                         <div className="flex items-center gap-1.5">
-                          <span>{ev.title}</span>
+                          <span className="text-xs md:text-sm">{ev.title}</span>
                           {ev.isUserEvent && (
                             <button
                               onClick={e => {
@@ -799,13 +826,17 @@ export default function AppPageClient() {
                             </button>
                           )}
                         </div>
+                        {/* モバイル：カテゴリバッジをタイトル下に表示 */}
+                        <div className="mt-0.5 md:hidden">
+                          <CategoryBadge category={ev.category} />
+                        </div>
                         {ev.description && (
                           <div className="pointer-events-none absolute left-[20ch] top-full mt-1 z-50 w-80 bg-ink-950 border border-sepia-700/50 rounded-sm px-3 py-2 text-xs text-sepia-300 leading-relaxed shadow-lg opacity-0 group-hover/row:opacity-100 transition-opacity duration-150">
                             {ev.description}
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2 hidden md:table-cell">
                         <div className="flex flex-wrap items-center gap-1">
                           <CategoryBadge category={ev.category} />
                           {ev.keywords?.map(kw => (

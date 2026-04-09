@@ -56,6 +56,14 @@ body {
   animation: fadeIn 0.25s ease-out both;
 }
 
+/* スクロールバー非表示（横スクロール用） */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* 和紙風テクスチャオーバーレイ */
 .paper-texture {
   background-image:
