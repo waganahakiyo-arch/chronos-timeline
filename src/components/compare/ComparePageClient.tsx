@@ -67,6 +67,8 @@ export default function ComparePageClient() {
   const [dateFormat, setDateFormat] = useState<1|2|3>(1)
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [printOpt, setPrintOpt] = useState<{ bg: 'dark' | 'light'; orientation: 'portrait' | 'landscape' }>({ bg: 'light', orientation: 'landscape' })
+  // モバイル用サイドバー開閉
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -103,6 +105,8 @@ export default function ComparePageClient() {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
+    // モバイルでは選択後にサイドバーを閉じる
+    if (window.innerWidth < 768) setSidebarOpen(false)
   }
 
   const signOut = async () => {
@@ -203,13 +207,28 @@ export default function ComparePageClient() {
     `}</style>
     <div className="flex flex-col h-screen overflow-hidden bg-ink-900 print:block print:h-auto print:overflow-visible">
       {/* ヘッダー */}
-      <header className="flex items-center justify-between px-6 py-3 bg-ink-950 border-b border-sepia-700/30 flex-shrink-0">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3 bg-ink-950 border-b border-sepia-700/30 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {/* モバイル：サイドバートグル */}
+          <button
+            onClick={() => setSidebarOpen(v => !v)}
+            className="md:hidden p-1.5 text-sepia-400 hover:text-paper-100 transition-colors"
+            aria-label="年表を選択"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="2" y1="4" x2="16" y2="4"/>
+              <line x1="2" y1="9" x2="16" y2="9"/>
+              <line x1="2" y1="14" x2="16" y2="14"/>
+            </svg>
+          </button>
           <span className="text-vermilion text-xl select-none">✦</span>
-          <h1 className="text-lg font-bold tracking-widest text-paper-100">年代記</h1>
+          <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
           <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">年表比較</span>
+          {selectedIds.length > 0 && (
+            <span className="md:hidden text-sepia-500 text-xs">{selectedIds.length}件選択</span>
+          )}
         </div>
-        <nav className="flex items-center gap-6 print:hidden">
+        <nav className="flex items-center gap-3 md:gap-6 print:hidden">
           {selectedTimelines.length > 0 && (
             <button
               onClick={() => setShowPrintDialog(true)}
@@ -218,24 +237,48 @@ export default function ComparePageClient() {
               PDF出力
             </button>
           )}
-          <Link href="/app" className="text-sepia-300 hover:text-paper-100 text-sm tracking-wider transition-colors">
+          <Link href="/app" className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors">
             編集
           </Link>
-          <Link href="/timelines" className="text-sepia-300 hover:text-paper-100 text-sm tracking-wider transition-colors">
+          <Link href="/timelines" className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors">
             年表一覧
           </Link>
-          <button onClick={signOut} className="text-sepia-400 hover:text-vermilion text-sm tracking-wider transition-colors">
+          <button onClick={signOut} className="text-sepia-400 hover:text-vermilion text-xs md:text-sm tracking-wider transition-colors">
             退出
           </button>
         </nav>
       </header>
 
       <div className="flex flex-1 overflow-hidden print:block print:overflow-visible">
+        {/* モバイル：サイドバー背景オーバーレイ */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* ─── サイドバー：年表選択 ──────────────────────────────── */}
-        <aside className="w-56 flex-shrink-0 bg-ink-800 border-r border-sepia-700/30 flex flex-col overflow-y-auto print:hidden">
-          <div className="px-4 py-3 border-b border-sepia-700/30 flex-shrink-0">
-            <p className="text-xs text-sepia-500 tracking-wider">年表を選択</p>
-            <p className="text-sepia-600 text-xs mt-0.5">{selectedIds.length} 件選択中</p>
+        <aside className={`
+          ${sidebarOpen ? 'flex' : 'hidden'} md:flex flex-col
+          fixed md:relative top-0 left-0 h-full md:h-auto
+          z-50 md:z-auto
+          w-72 md:w-56 flex-shrink-0
+          bg-ink-800 border-r border-sepia-700/30
+          overflow-y-auto print:hidden
+        `}>
+          <div className="px-4 py-3 border-b border-sepia-700/30 flex-shrink-0 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-sepia-500 tracking-wider">年表を選択</p>
+              <p className="text-sepia-600 text-xs mt-0.5">{selectedIds.length} 件選択中</p>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-sepia-500 hover:text-paper-100 text-lg leading-none p-1 transition-colors"
+              aria-label="閉じる"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="px-4 py-2.5 border-b border-sepia-700/30 flex-shrink-0">
@@ -310,12 +353,20 @@ export default function ComparePageClient() {
         </aside>
 
         {/* ─── メイン：比較グリッド ──────────────────────────────── */}
-        <main className="flex-1 overflow-auto print:overflow-visible print:block">
+        <main className="flex-1 overflow-auto print:overflow-visible print:block" style={{ WebkitOverflowScrolling: 'touch' }}>
           {selectedTimelines.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center space-y-3 text-sepia-600">
                 <p className="text-4xl">◎</p>
-                <p className="text-sm tracking-wider">左のパネルから年表を選択してください</p>
+                <p className="text-sm tracking-wider hidden md:block">左のパネルから年表を選択してください</p>
+                <p className="text-sm tracking-wider md:hidden">
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="text-vermilion hover:text-vermilion-light transition-colors"
+                  >
+                    ☰ 年表を選択
+                  </button>
+                </p>
                 <p className="text-xs text-sepia-700">複数選択して年表を横並びに比較できます</p>
               </div>
             </div>
@@ -336,7 +387,7 @@ export default function ComparePageClient() {
               <thead>
                 <tr>
                   {/* 左上コーナー（日付ヘッダー） */}
-                  <th className="sticky top-0 left-0 z-40 bg-ink-950 px-4 py-3 font-normal text-xs text-sepia-500 tracking-wider border-b border-r border-sepia-700/40 w-28 whitespace-nowrap">
+                  <th className="sticky top-0 left-0 z-40 bg-ink-950 px-2 md:px-4 py-2 md:py-3 font-normal text-xs text-sepia-500 tracking-wider border-b border-r border-sepia-700/40 w-20 md:w-28 whitespace-nowrap">
                     日付
                   </th>
                   {selectedTimelines.map((tl, i) => {
@@ -347,7 +398,7 @@ export default function ComparePageClient() {
                     return (
                       <th
                         key={tl.id}
-                        className={`sticky top-0 z-30 bg-ink-950 px-4 py-3 text-left font-normal border-b border-r border-sepia-700/40 min-w-[200px] max-w-[280px]`}
+                        className={`sticky top-0 z-30 bg-ink-950 px-3 md:px-4 py-2 md:py-3 text-left font-normal border-b border-r border-sepia-700/40 min-w-[160px] md:min-w-[200px] max-w-[280px]`}
                       >
                         <div className={`text-xs font-bold tracking-wider truncate ${color.text}`}>
                           {tl.name}
@@ -375,7 +426,7 @@ export default function ComparePageClient() {
                   return (
                     <tr key={`${sortValue}:${time ?? ''}`} className="group/row">
                       {/* 日付ラベル（sticky left） */}
-                      <td className="sticky left-0 z-20 bg-ink-900 group-hover/row:bg-ink-800/80 px-4 py-2 border-b border-r border-sepia-700/25 align-top whitespace-nowrap">
+                      <td className="sticky left-0 z-20 bg-ink-900 group-hover/row:bg-ink-800/80 px-2 md:px-4 py-1.5 md:py-2 border-b border-r border-sepia-700/25 align-top whitespace-nowrap">
                         {dateFormat === 1 && (
                           !sameYearAsPrev
                             ? <div className="text-green-400 font-bold tabular-nums text-sm">{year}年</div>
@@ -415,7 +466,7 @@ export default function ComparePageClient() {
                         return (
                           <td
                             key={tl.id}
-                            className={`px-3 py-2 border-b border-r border-sepia-700/15 align-top`}
+                            className={`px-2 md:px-3 py-1.5 md:py-2 border-b border-r border-sepia-700/15 align-top`}
                           >
                             {events.length > 0 ? (
                               <div className="space-y-2.5">
