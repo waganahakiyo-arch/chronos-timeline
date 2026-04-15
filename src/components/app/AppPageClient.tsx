@@ -56,6 +56,7 @@ export default function AppPageClient() {
   const [userEvents, setUserEvents] = useState<UserEvent[]>([])
   const importFileRef = useRef<HTMLInputElement>(null)
   const [dateFormat, setDateFormat] = useState<1|2|3>(1)
+  const [editingUserEvent, setEditingUserEvent] = useState<UserEvent | null>(null)
   // モバイル用パネル切り替え
   const [leftOpen, setLeftOpen] = useState(true)
 
@@ -250,6 +251,26 @@ export default function AppPageClient() {
   const deleteUserEvent = async (id: string) => {
     await supabase.from('user_events').delete().eq('id', id)
     setUserEvents(prev => prev.filter(e => e.id !== id))
+  }
+
+  const updateUserEvent = async (id: string, updates: {
+    year: number; title: string; description: string | null;
+    era: string | null; keywords: string[] | null; wiki_url: string | null; event_date: string | null
+  }) => {
+    const { error } = await supabase.from('user_events').update(updates).eq('id', id)
+    if (error) { flash(`更新失敗: ${error.message}`); return }
+    const original = userEvents.find(e => e.id === id)
+    setUserEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e).sort((a, b) => a.year - b.year))
+    if (original) {
+      setCurrentEvents(prev => prev.map(e =>
+        e.year === original.year && e.title === original.title && e.category === '独自イベント'
+          ? { ...e, year: updates.year, title: updates.title, description: updates.description,
+              era: updates.era, keywords: updates.keywords, wiki_url: updates.wiki_url, event_date: updates.event_date }
+          : e
+      ).sort((a, b) => a.year - b.year))
+    }
+    flash('✦ 独自イベントを更新しました')
+    setEditingUserEvent(null)
   }
 
   const exportUserEvents = () => {
@@ -799,6 +820,11 @@ export default function AppPageClient() {
                     <tr
                       key={ev.id}
                       onClick={() => !added && addEvent(ev)}
+                      onContextMenu={ev.isUserEvent ? (e) => {
+                        e.preventDefault()
+                        const ue = userEvents.find(u => u.id === ev.id)
+                        if (ue) setEditingUserEvent(ue)
+                      } : undefined}
                       className={`border-b border-sepia-700/15 transition-colors group/row ${
                         added
                           ? 'opacity-50 cursor-default'
@@ -865,6 +891,15 @@ export default function AppPageClient() {
           </div>
         </main>
       </div>
+
+      {/* 独自イベント編集ダイアログ */}
+      {editingUserEvent && (
+        <EditUserEventDialog
+          event={editingUserEvent}
+          onSave={(updates) => updateUserEvent(editingUserEvent.id, updates)}
+          onClose={() => setEditingUserEvent(null)}
+        />
+      )}
     </div>
   )
 }
@@ -881,8 +916,18 @@ const toStorageDate = (v: string) =>
 const toInputDate = (v: string) =>
   v.replace(' ', 'T').replace(/\//g, '-').slice(0, 16)
 
+// テキスト入力から年と event_date を解析
+// 受け付ける形式: "YYYY" / "YYYY/MM/DD" / "YYYY/MM/DD HH:mm"
+function parseDateText(s: string): { year: number; event_date: string | null } | null {
+  const t = s.trim()
+  if (/^\d{4}$/.test(t)) return { year: parseInt(t), event_date: null }
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(t)) return { year: parseInt(t.slice(0, 4)), event_date: t + ' 00:00' }
+  if (/^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}$/.test(t)) return { year: parseInt(t.slice(0, 4)), event_date: t }
+  return null
+}
+
 function CustomEventForm({ onAdd }: { onAdd: (ev: CustomEventInput) => void }) {
-  const [eventDate, setEventDate] = useState('')   // "YYYY/MM/DD HH:mm"
+  const [dateInput, setDateInput] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [era, setEra] = useState<string>('')
@@ -904,14 +949,14 @@ function CustomEventForm({ onAdd }: { onAdd: (ev: CustomEventInput) => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!eventDate) { setError('日時を入力してください'); return }
-    const year = parseInt(eventDate.slice(0, 4))
-    if (isNaN(year)) { setError('日時の形式が正しくありません'); return }
+    if (!dateInput.trim()) { setError('年を入力してください'); return }
+    const parsed = parseDateText(dateInput)
+    if (!parsed) { setError('形式が正しくありません（例：1901 / 1901/08/15 / 1901/08/15 14:30）'); return }
     if (!title.trim()) { setError('事件名を入力してください'); return }
     setError('')
     onAdd({
-      year,
-      event_date: eventDate,
+      year: parsed.year,
+      event_date: parsed.event_date,
       title: title.trim(),
       description: description.trim() || null,
       category: '独自イベント',
@@ -919,7 +964,7 @@ function CustomEventForm({ onAdd }: { onAdd: (ev: CustomEventInput) => void }) {
       keywords: keywords.length > 0 ? keywords : null,
       wiki_url: wikiUrl.trim() || null,
     })
-    setEventDate(''); setTitle(''); setDescription('')
+    setDateInput(''); setTitle(''); setDescription('')
     setEra(''); setKeywords([]); setKeywordInput(''); setWikiUrl('')
   }
 
@@ -931,16 +976,14 @@ function CustomEventForm({ onAdd }: { onAdd: (ev: CustomEventInput) => void }) {
     <form onSubmit={handleSubmit} className="mt-2 p-3 border border-sepia-700/30 rounded-sm bg-ink-900/60 space-y-2.5">
       {/* 日時 */}
       <div>
-        <label className={labelCls}>日時（YYYY/MM/DD hh:mm）<span className="text-vermilion">*</span></label>
+        <label className={labelCls}>年・日時 <span className="text-vermilion">*</span></label>
         <input
-          type="datetime-local"
-          value={eventDate ? toInputDate(eventDate) : ''}
-          onChange={e => setEventDate(e.target.value ? toStorageDate(e.target.value) : '')}
+          type="text"
+          value={dateInput}
+          onChange={e => setDateInput(e.target.value)}
+          placeholder="1901 または 1901/08/15 または 1901/08/15 14:30"
           className={inputCls}
         />
-        {eventDate && (
-          <p className="mt-1 text-[10px] text-sepia-500">{eventDate}</p>
-        )}
       </div>
 
       {/* 事件名 */}
@@ -1029,5 +1072,148 @@ function CustomEventForm({ onAdd }: { onAdd: (ev: CustomEventInput) => void }) {
         年表に追加
       </button>
     </form>
+  )
+}
+
+// ─── EditUserEventDialog ───────────────────────────────────────────
+
+type EditUpdates = {
+  year: number; title: string; description: string | null;
+  era: string | null; keywords: string[] | null; wiki_url: string | null; event_date: string | null
+}
+
+function EditUserEventDialog({
+  event,
+  onSave,
+  onClose,
+}: {
+  event: UserEvent
+  onSave: (updates: EditUpdates) => void
+  onClose: () => void
+}) {
+  const [dateInput, setDateInput] = useState(event.event_date ?? String(event.year))
+  const [title, setTitle] = useState(event.title)
+  const [description, setDescription] = useState(event.description ?? '')
+  const [era, setEra] = useState(event.era ?? '')
+  const [keywords, setKeywords] = useState<string[]>(event.keywords ?? [])
+  const [keywordInput, setKeywordInput] = useState('')
+  const [wikiUrl, setWikiUrl] = useState(event.wiki_url ?? '')
+  const [error, setError] = useState('')
+
+  const addKeyword = () => {
+    const kw = keywordInput.trim()
+    if (kw && !keywords.includes(kw)) setKeywords(prev => [...prev, kw])
+    setKeywordInput('')
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!dateInput.trim()) { setError('年を入力してください'); return }
+    const parsed = parseDateText(dateInput)
+    if (!parsed) { setError('形式が正しくありません（例：1901 / 1901/08/15 / 1901/08/15 14:30）'); return }
+    if (!title.trim()) { setError('事件名を入力してください'); return }
+    setError('')
+    onSave({
+      year: parsed.year,
+      event_date: parsed.event_date,
+      title: title.trim(),
+      description: description.trim() || null,
+      era: era || null,
+      keywords: keywords.length > 0 ? keywords : null,
+      wiki_url: wikiUrl.trim() || null,
+    })
+  }
+
+  const inputCls = 'w-full bg-ink-950 border border-sepia-700/40 rounded-sm px-2 py-1.5 text-paper-200 text-xs placeholder-sepia-600 focus:outline-none focus:border-vermilion/60 transition-colors'
+  const selectCls = `${inputCls} cursor-pointer`
+  const labelCls = 'block text-sepia-500 text-[10px] tracking-wider mb-1'
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="bg-ink-950 border border-sepia-700/50 rounded-sm p-5 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-paper-200 text-sm tracking-wider">独自イベントを編集</p>
+          <button onClick={onClose} className="text-sepia-500 hover:text-paper-100 text-lg leading-none transition-colors">✕</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-2.5">
+          <div>
+            <label className={labelCls}>年・日時 <span className="text-vermilion">*</span></label>
+            <input
+              type="text"
+              value={dateInput}
+              onChange={e => setDateInput(e.target.value)}
+              placeholder="1901 または 1901/08/15 または 1901/08/15 14:30"
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>事件名 <span className="text-vermilion">*</span></label>
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>説明</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className={`${inputCls} resize-none`} />
+          </div>
+
+          <div>
+            <label className={labelCls}>時代区分</label>
+            <select value={era} onChange={e => setEra(e.target.value)} className={selectCls}>
+              <option value="">— 未選択 —</option>
+              {ERAS.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelCls}>キーワード（Enter または , で追加）</label>
+            <div className="flex gap-1">
+              <input
+                type="text"
+                value={keywordInput}
+                onChange={e => setKeywordInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); addKeyword() }
+                  if (e.key === ',') { e.preventDefault(); addKeyword() }
+                }}
+                placeholder="キーワード..."
+                className={`${inputCls} flex-1`}
+              />
+              <button type="button" onClick={addKeyword} className="px-2 py-1.5 text-xs border border-sepia-700/40 text-sepia-400 hover:text-paper-200 hover:border-sepia-600/60 rounded-sm transition-colors">追加</button>
+            </div>
+            {keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {keywords.map(kw => (
+                  <span key={kw} className="inline-flex items-center gap-1 px-2 py-0.5 bg-ink-800 border border-sepia-700/40 text-sepia-300 text-[10px] rounded-full">
+                    {kw}
+                    <button type="button" onClick={() => setKeywords(prev => prev.filter(k => k !== kw))} className="text-sepia-500 hover:text-vermilion transition-colors">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelCls}>Wikipedia URL</label>
+            <input type="url" value={wikiUrl} onChange={e => setWikiUrl(e.target.value)} placeholder="https://ja.wikipedia.org/wiki/..." className={inputCls} />
+          </div>
+
+          {error && <p className="text-xs text-vermilion">{error}</p>}
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2 text-xs tracking-wider border border-sepia-700/40 text-sepia-400 hover:text-paper-200 rounded-sm transition-colors">
+              キャンセル
+            </button>
+            <button type="submit" className="flex-1 bg-vermilion/20 hover:bg-vermilion/30 border border-vermilion/50 text-vermilion py-2 rounded-sm text-xs tracking-widest transition-colors">
+              更 新
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }

@@ -27,6 +27,11 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // /auth/* はそのまま通す
+  if (request.nextUrl.pathname.startsWith('/auth')) {
+    return supabaseResponse
+  }
+
   // 未ログインでアプリページにアクセスした場合はトップへ
   if (!user && request.nextUrl.pathname.startsWith('/app')) {
     const url = request.nextUrl.clone()

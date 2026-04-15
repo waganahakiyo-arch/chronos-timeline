@@ -148,6 +148,11 @@ export default function ComparePageClient() {
     ).sort((a, b) => a.sortValue - b.sortValue)
   })()
 
+  // 全選択年表の全イベントが独自イベントのみかどうか
+  const allCustomEvents =
+    selectedTimelines.length > 0 &&
+    selectedTimelines.flatMap(tl => tl.events).every(ev => ev.category === '独自イベント')
+
   return (
     <>
     <style>{`
@@ -383,6 +388,12 @@ export default function ComparePageClient() {
                 {selectedTimelines.map(tl => tl.name).join(' ／ ')}
               </p>
             </div>
+            {/* 全独自イベント時のヘッダー */}
+            {allCustomEvents && (
+              <div className="px-4 py-2.5 bg-ink-800/60 border-b border-sepia-700/30 text-center print:py-1">
+                <span className="text-sepia-300 text-sm tracking-widest">【独自イベントの比較年表】</span>
+              </div>
+            )}
             <table className="border-collapse text-sm print:w-full">
               <thead>
                 <tr>
@@ -476,7 +487,7 @@ export default function ComparePageClient() {
                                     className={`relative pl-2 border-l-2 ${color.border} group/ev`}
                                   >
                                     <div className={`text-xs font-medium leading-snug ${color.text}`}>
-                                      {!showCategory && ev.category === '独自イベント' ? `【独】${ev.title}` : ev.title}
+                                      {!allCustomEvents && !showCategory && ev.category === '独自イベント' ? `【独】${ev.title}` : ev.title}
                                     </div>
                                     {showCategory && ev.category && (
                                       <span className={`mt-1 inline-flex items-center px-1.5 py-0.5 text-[10px] border rounded-sm ${
