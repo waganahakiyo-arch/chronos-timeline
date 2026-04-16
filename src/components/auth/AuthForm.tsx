@@ -19,10 +19,32 @@ export default function AuthForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [guestLoading, setGuestLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
   const supabase = createClient()
+
+  const handleGuestLogin = async () => {
+    const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL
+    const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD
+    if (!guestEmail || !guestPassword) {
+      setError('ゲストアカウントが設定されていません')
+      return
+    }
+    setGuestLoading(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: guestEmail, password: guestPassword })
+      if (error) throw error
+      router.push('/app')
+      router.refresh()
+    } catch {
+      setError('ゲストログインに失敗しました')
+    } finally {
+      setGuestLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,6 +149,19 @@ export default function AuthForm() {
           {loading ? '処理中...' : mode === 'login' ? '入 場' : '登 録'}
         </button>
       </form>
+
+      <div className="mt-4 pt-4 border-t border-sepia-700/30">
+        <button
+          onClick={handleGuestLogin}
+          disabled={guestLoading}
+          className="w-full py-2.5 text-xs tracking-wider border border-sepia-700/40 text-sepia-400 hover:border-sepia-500/60 hover:text-sepia-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm transition-colors"
+        >
+          {guestLoading ? '接続中...' : 'ログインせず使う（全ユーザ共通のゲストで利用）'}
+        </button>
+        <p className="mt-2 text-center text-sepia-600 text-[10px] tracking-wide">
+          ゲストのデータは全利用者で共有されます
+        </p>
+      </div>
     </div>
   )
 }
