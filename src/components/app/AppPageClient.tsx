@@ -462,6 +462,14 @@ export default function AppPageClient() {
               >
                 ☰
               </button>
+              <button
+                onClick={saveTimeline}
+                disabled={saving}
+                title="保存"
+                className="md:hidden p-2 bg-vermilion hover:bg-vermilion-light disabled:opacity-50 text-paper-100 border border-vermilion/60 rounded-sm transition-colors text-xs tracking-widest"
+              >
+                {saving ? '…' : '保存'}
+              </button>
             </div>
 
             {/* 保存済み年表ドロップダウン */}
