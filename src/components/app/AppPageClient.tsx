@@ -462,14 +462,6 @@ export default function AppPageClient() {
               >
                 ☰
               </button>
-              <button
-                onClick={saveTimeline}
-                disabled={saving}
-                title="保存"
-                className="md:hidden p-2 bg-vermilion hover:bg-vermilion-light disabled:opacity-50 text-paper-100 border border-vermilion/60 rounded-sm transition-colors text-xs tracking-widest"
-              >
-                {saving ? '…' : '保存'}
-              </button>
             </div>
 
             {/* 保存済み年表ドロップダウン */}
@@ -512,7 +504,8 @@ export default function AppPageClient() {
             )}
 
             {/* 保存・公開ボタン */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <span className="hidden md:block text-sepia-400 text-xs tracking-wider flex-shrink-0">{currentEvents.length}件</span>
               <button
                 onClick={saveTimeline}
                 disabled={saving}
@@ -714,7 +707,14 @@ export default function AppPageClient() {
               {timelineName && (
                 <span className="text-paper-200 text-xs truncate flex-1 text-center">{timelineName}</span>
               )}
-              <span className="text-sepia-500 text-xs">{filteredEvents.length}件</span>
+              <button
+                onClick={saveTimeline}
+                disabled={saving}
+                className="flex-shrink-0 px-2 py-1 bg-vermilion hover:bg-vermilion-light disabled:opacity-50 text-paper-100 rounded-sm text-xs tracking-widest transition-colors"
+              >
+                {saving ? '…' : '保存'}
+              </button>
+              <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
             </div>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
