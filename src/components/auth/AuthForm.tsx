@@ -26,17 +26,13 @@ export default function AuthForm() {
   const supabase = createClient()
 
   const handleGuestLogin = async () => {
-    const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL
-    const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD
-    if (!guestEmail || !guestPassword) {
-      setError('ゲストアカウントが設定されていません')
-      return
-    }
     setGuestLoading(true)
     setError('')
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: guestEmail, password: guestPassword })
-      if (error) throw error
+      const res = await fetch('/api/guest-login', { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'ゲストログイン失敗')
+      await supabase.auth.setSession({ access_token: json.access_token, refresh_token: json.refresh_token })
       router.push('/app')
       router.refresh()
     } catch {
