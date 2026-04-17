@@ -445,6 +445,13 @@ export default function AppPageClient() {
       <div className="flex flex-1 overflow-hidden">
         {/* ─── 左パネル：年表エディタ ─────────────────────────────── */}
         <aside className={`${leftOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 md:flex-shrink-0 bg-ink-800 border-r border-sepia-700/30`}>
+          {/* パネル見出し */}
+          <div className="px-4 pt-3 pb-2 border-b border-sepia-700/20">
+            {/* モバイル */}
+            <p className="md:hidden text-sepia-400 text-xs tracking-widest">編集対象の年表を選んでください</p>
+            {/* PC */}
+            <p className="hidden md:block text-sepia-400 text-xs tracking-widest">左パネルで編集対象の年表を選ぶ</p>
+          </div>
           {/* タイトル入力 */}
           <div className="p-4 border-b border-sepia-700/30">
             <div className="flex items-center gap-2 mb-3">
@@ -453,7 +460,7 @@ export default function AppPageClient() {
                 value={timelineName}
                 onChange={(e) => setTimelineName(e.target.value)}
                 placeholder="年表のタイトルを入力..."
-                className="flex-1 bg-ink-950 border border-sepia-700/40 rounded-sm px-3 py-2 text-paper-100 placeholder-sepia-600 text-sm focus:outline-none focus:border-vermilion/60 transition-colors"
+                className="flex-1 min-w-0 bg-ink-950 border border-sepia-700/40 rounded-sm px-3 py-2 text-paper-100 placeholder-sepia-600 text-sm focus:outline-none focus:border-vermilion/60 transition-colors"
               />
               <button
                 onClick={() => setShowSavedList(v => !v)}
@@ -716,6 +723,8 @@ export default function AppPageClient() {
               </button>
               <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
             </div>
+            {/* PC：右パネル説明 */}
+            <p className="hidden md:block px-5 pt-2 text-sepia-500 text-xs tracking-widest">右パネルで歴史イベントをクリックして年表に追加</p>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
             <span className="text-sepia-300 text-xs tracking-wider mr-1 flex-shrink-0">絞込：</span>
