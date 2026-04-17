@@ -60,6 +60,11 @@ export default function AppPageClient() {
   // モバイル用パネル切り替え
   const [leftOpen, setLeftOpen] = useState(true)
 
+  // チュートリアル（毎ログインでリセット、0=非表示）
+  const [tutorialStep, setTutorialStep] = useState<0|1|2|3>(0)
+  // 比較ページ訪問済みフラグ（一度訪問したらフキダシ永久スキップ）
+  const [compareVisited, setCompareVisited] = useState(false)
+
   // ─── 初期化 ───────────────────────────────────────────────────────
   useEffect(() => {
     ;(async () => {
@@ -68,6 +73,10 @@ export default function AppPageClient() {
       setUserId(user.id)
       fetchTimelines(user.id)
       fetchUserEvents(user.id)
+      // チュートリアルは毎ログインで step 1 からスタート
+      setTutorialStep(1)
+      // 比較ページ訪問済みかチェック
+      setCompareVisited(localStorage.getItem('chronos_compare_visited') === '1')
     })()
   }, [])
 
@@ -228,6 +237,7 @@ export default function AppPageClient() {
       }
       await fetchTimelines(userId)
       flash('✦ 保存しました')
+      if (tutorialStep === 2) setTutorialStep(3)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? '不明なエラー'
       flash(`保存失敗: ${msg}`)
@@ -247,6 +257,16 @@ export default function AppPageClient() {
     setStatusMsg(msg)
     setTimeout(() => setStatusMsg(''), 3000)
   }
+
+  const completeTutorial = () => setTutorialStep(0)
+
+  // step 3 のフキダシは 6 秒後に自動消去
+  useEffect(() => {
+    if (tutorialStep === 3) {
+      const t = setTimeout(() => setTutorialStep(0), 6000)
+      return () => clearTimeout(t)
+    }
+  }, [tutorialStep])
 
   const deleteUserEvent = async (id: string) => {
     await supabase.from('user_events').delete().eq('id', id)
@@ -426,12 +446,34 @@ export default function AppPageClient() {
           >
             年表一覧
           </Link>
-          <Link
-            href="/compare"
-            className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors"
-          >
-            比較
-          </Link>
+          <div className="relative">
+            <Link
+              href="/compare"
+              onClick={() => {
+                localStorage.setItem('chronos_compare_visited', '1')
+                setCompareVisited(true)
+                completeTutorial()
+              }}
+              className={`text-xs md:text-sm tracking-wider transition-colors ${
+                tutorialStep === 3 && !compareVisited
+                  ? 'text-paper-100 font-semibold animate-pulse'
+                  : 'text-sepia-300 hover:text-paper-100'
+              }`}
+            >
+              比較
+            </Link>
+            {tutorialStep === 3 && !compareVisited && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-ink-950 border border-sepia-600/60 rounded-sm px-3 py-2.5 text-xs text-paper-200 shadow-xl z-50 animate-fadeIn">
+                <p className="leading-relaxed">比較モードで作った年表を並べて表示することができます</p>
+                <button
+                  onClick={completeTutorial}
+                  className="mt-2 text-sepia-500 hover:text-sepia-300 text-[10px] transition-colors"
+                >
+                  閉じる ✕
+                </button>
+              </div>
+            )}
+          </div>
           <button
             onClick={signOut}
             className="text-sepia-400 hover:text-vermilion text-xs md:text-sm tracking-wider transition-colors"
@@ -448,9 +490,13 @@ export default function AppPageClient() {
           {/* パネル見出し */}
           <div className="px-4 pt-3 pb-2 border-b border-sepia-700/20">
             {/* モバイル */}
-            <p className="md:hidden text-sepia-400 text-xs tracking-widest">編集対象の年表を選んでください</p>
+            <p className={`md:hidden text-xs tracking-widest transition-all duration-500 ${
+              tutorialStep === 1 ? 'text-paper-100 animate-pulse' : 'text-sepia-400'
+            }`}>編集対象の年表を選んでください</p>
             {/* PC */}
-            <p className="hidden md:block text-sepia-400 text-xs tracking-widest">左パネルで編集対象の年表を選ぶ</p>
+            <p className={`hidden md:block text-xs tracking-widest transition-all duration-500 ${
+              tutorialStep === 1 ? 'text-paper-100 animate-pulse' : 'text-sepia-400'
+            }`}>左パネルで編集対象の年表を選ぶ</p>
           </div>
           {/* タイトル入力 */}
           <div className="p-4 border-b border-sepia-700/30">
@@ -463,9 +509,16 @@ export default function AppPageClient() {
                 className="flex-1 min-w-0 bg-ink-950 border border-sepia-700/40 rounded-sm px-3 py-2 text-paper-100 placeholder-sepia-600 text-sm focus:outline-none focus:border-vermilion/60 transition-colors"
               />
               <button
-                onClick={() => setShowSavedList(v => !v)}
+                onClick={() => {
+                  setShowSavedList(v => !v)
+                  if (tutorialStep === 1) setTutorialStep(2)
+                }}
                 title="保存済み年表を選択"
-                className="p-2 text-sepia-400 hover:text-paper-200 border border-sepia-700/40 rounded-sm hover:border-sepia-600/60 transition-colors"
+                className={`p-2 hover:text-paper-200 border rounded-sm hover:border-sepia-600/60 transition-all ${
+                  tutorialStep === 1
+                    ? 'text-paper-200 border-paper-100/50 ring-1 ring-paper-100/20 animate-pulse'
+                    : 'text-sepia-400 border-sepia-700/40'
+                }`}
               >
                 ☰
               </button>
@@ -724,7 +777,9 @@ export default function AppPageClient() {
               <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
             </div>
             {/* PC：右パネル説明 */}
-            <p className="hidden md:block px-5 pt-2 text-sepia-500 text-xs tracking-widest">右パネルで歴史イベントをクリックして年表に追加</p>
+            <p className={`hidden md:block px-5 pt-2 text-xs tracking-widest transition-all duration-500 ${
+              tutorialStep === 2 ? 'text-paper-100 animate-pulse' : 'text-sepia-500'
+            }`}>右パネルで歴史イベントをクリックして年表に追加</p>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
             <span className="text-sepia-300 text-xs tracking-wider mr-1 flex-shrink-0">絞込：</span>
