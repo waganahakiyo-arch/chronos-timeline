@@ -436,6 +436,16 @@ export default function AppPageClient() {
   const isAdded = (ev: MasterEvent) =>
     currentEvents.some(e => e.year === ev.year && e.title === ev.title)
 
+  // 比較モード時の同期年リスト
+  const syncYears = useMemo(() => {
+    if (!compareMode) return []
+    const yearSet = new Set([
+      ...currentEvents.map(e => e.year),
+      ...compareDisplayEvents.map(e => e.year),
+    ])
+    return Array.from(yearSet).sort((a, b) => a - b)
+  }, [compareMode, currentEvents, compareDisplayEvents])
+
   // 比較列のイベントを読み込む（allMasterEvents の後に配置）
   useEffect(() => {
     if (!compareMode) { setCompareDisplayEvents([]); return }
@@ -530,8 +540,8 @@ export default function AppPageClient() {
               比較列を表示
             </label>
           </div>
-          {/* 列コンテナ */}
-          <div className="flex flex-1 overflow-hidden">
+          {/* 列コンテナ（compareMode 時はヘッダー領域のみ） */}
+          <div className={`flex overflow-hidden ${compareMode ? 'flex-1 md:flex-none' : 'flex-1'}`}>
           {/* ── 編集列 ── */}
           <div className="flex flex-col w-full md:w-80 md:flex-shrink-0 overflow-hidden">
           {/* パネル見出し */}
@@ -669,8 +679,8 @@ export default function AppPageClient() {
             </button>
           </div>
 
-          {/* 年表イベントリスト */}
-          <div className="flex-1 overflow-y-auto p-3">
+          {/* 年表イベントリスト（compareMode PC 時は非表示） */}
+          <div className={`overflow-y-auto p-3 ${compareMode ? 'flex-1 md:hidden' : 'flex-1'}`}>
             {/* 独自イベント追加 */}
             <div className="mb-3">
               <button
@@ -830,35 +840,60 @@ export default function AppPageClient() {
                   )}
                 </select>
               </div>
-              {/* 比較イベントリスト */}
-              <div className="flex-1 overflow-y-auto p-3">
-                {compareDisplayEvents.length === 0 ? (
-                  <p className="text-center text-sepia-600 text-xs mt-8">イベントなし</p>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute left-[26px] top-0 bottom-0 w-px bg-sepia-700/30" />
-                    {compareDisplayEvents.map((ev, idx) => (
-                      <div key={idx} className="relative flex items-start gap-3 pl-2 pr-1 py-2">
-                        <div className="relative z-10 mt-1 flex-shrink-0">
-                          <div className={`w-3 h-3 rounded-full border-2 border-ink-800 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 flex-wrap">
-                            <YearBadge year={ev.year} />
-                            <span className="text-paper-200 text-xs font-medium truncate">{ev.title}</span>
-                          </div>
-                          <div className="mt-1">
-                            <CategoryBadge category={ev.category} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           )}
           </div>{/* /列コンテナ */}
+
+          {/* ── 同期タイムライン（PC compareMode のみ） ── */}
+          {compareMode && (
+            <div className="hidden md:flex flex-col flex-1 overflow-hidden">
+              {/* 列ヘッダー */}
+              <div className="flex flex-shrink-0 border-b border-sepia-700/30 bg-ink-900/40 text-[10px] text-sepia-500 tracking-wider">
+                <div className="flex-1 px-3 py-1.5">編集中 · {currentEvents.length}件</div>
+                <div className="w-px bg-sepia-700/30 flex-shrink-0" />
+                <div className="flex-1 px-3 py-1.5">比較 · {compareDisplayEvents.length}件</div>
+              </div>
+              {/* 年ごとの同期行 */}
+              <div className="flex-1 overflow-y-auto">
+                {syncYears.length === 0 ? (
+                  <p className="text-center text-sepia-600 text-xs mt-8">イベントを追加してください</p>
+                ) : syncYears.map(year => {
+                  const editEvs = currentEvents.filter(e => e.year === year)
+                  const cmpEvs = compareDisplayEvents.filter(e => e.year === year)
+                  return (
+                    <div key={year} className="flex border-b border-sepia-700/10 items-stretch">
+                      {/* 編集側 */}
+                      <div className="flex-1 px-2 py-1.5 min-h-[2rem]">
+                        <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider">{year}年</span>
+                        {editEvs.map(ev => (
+                          <div key={ev.id} className="flex items-center gap-1 mt-0.5 group/ev">
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
+                            <span className="text-paper-200 text-[11px] truncate flex-1">{ev.title}</span>
+                            <button
+                              onClick={() => removeEvent(ev.id)}
+                              className="flex-shrink-0 text-sepia-700 hover:text-vermilion opacity-0 group-hover/ev:opacity-100 text-[10px] transition-all"
+                              title="削除"
+                            >✕</button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="w-px bg-sepia-700/20 flex-shrink-0" />
+                      {/* 比較側 */}
+                      <div className="flex-1 px-2 py-1.5 min-h-[2rem]">
+                        <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider invisible">{year}年</span>
+                        {cmpEvs.map((ev, i) => (
+                          <div key={i} className="flex items-center gap-1 mt-0.5">
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
+                            <span className="text-sepia-400 text-[11px] truncate">{ev.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* ─── 右パネル：歴史事件リスト ───────────────────────────── */}
