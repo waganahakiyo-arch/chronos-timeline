@@ -434,16 +434,10 @@ export default function AppPageClient() {
     <div className="flex flex-col h-screen overflow-hidden bg-ink-900">
       {/* ヘッダー */}
       <header className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3 bg-ink-950 border-b border-sepia-700/30 flex-shrink-0">
-        <div className="flex items-center gap-3 md:gap-6">
-          <div className="flex items-center gap-3">
-            <span className="text-vermilion text-xl select-none">✦</span>
-            <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
-            <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">歴史年表アーカイブ</span>
-          </div>
-          {/* 右パネル説明（PC版・ヘッダーと同じ高さ・左寄せ） */}
-          <p className={`hidden md:block text-xs tracking-widest transition-all duration-500 ${
-            tutorialStep === 2 ? 'text-paper-100 animate-pulse' : 'text-sepia-500'
-          }`}>右パネルで歴史イベントをクリックして年表に追加</p>
+        <div className="flex items-center gap-3">
+          <span className="text-vermilion text-xl select-none">✦</span>
+          <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
+          <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">歴史年表アーカイブ</span>
         </div>
         <nav className="flex items-center gap-4 md:gap-6">
           <Link
@@ -782,6 +776,10 @@ export default function AppPageClient() {
               </button>
               <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
             </div>
+            {/* PC：右パネル説明（フィルター左端に揃える） */}
+            <p className={`hidden md:block px-5 pt-2 text-xs tracking-widest transition-all duration-500 ${
+              tutorialStep === 2 ? 'text-paper-100 animate-pulse' : 'text-sepia-500'
+            }`}>右パネルで歴史イベントをクリックして年表に追加</p>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
             <span className="text-sepia-300 text-xs tracking-wider mr-1 flex-shrink-0">絞込：</span>
