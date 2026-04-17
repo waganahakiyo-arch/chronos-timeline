@@ -63,7 +63,7 @@ export default function AppPageClient() {
   // 左パネル比較列
   const [compareMode, setCompareMode] = useState(false)
   const [compareSourceType, setCompareSourceType] = useState<'category' | 'timeline'>('category')
-  const [compareSourceId, setCompareSourceId] = useState<string>('日本の政治')
+  const [compareSourceId, setCompareSourceId] = useState<string>('日本の歴史')
   const [compareDisplayEvents, setCompareDisplayEvents] = useState<{ year: number; title: string; category: string; event_date?: string | null }[]>([])
 
   // チュートリアル（毎ログインでリセット、0=非表示）
