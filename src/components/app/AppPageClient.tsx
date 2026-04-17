@@ -871,7 +871,7 @@ export default function AppPageClient() {
                             <span className="text-paper-200 text-[11px] truncate flex-1">{ev.title}</span>
                             <button
                               onClick={() => removeEvent(ev.id)}
-                              className="flex-shrink-0 text-sepia-700 hover:text-vermilion opacity-0 group-hover/ev:opacity-100 text-[10px] transition-all"
+                              className="flex-shrink-0 opacity-0 group-hover/ev:opacity-100 transition-all bg-ink-900 hover:bg-vermilion/80 text-sepia-400 hover:text-paper-100 rounded-sm px-1 py-0.5 text-[10px] leading-none"
                               title="削除"
                             >✕</button>
                           </div>
