@@ -243,7 +243,7 @@ export default function ComparePageClient() {
             </button>
           )}
           <Link href="/app" className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors">
-            編集
+            年表を作る
           </Link>
           <Link href="/timelines" className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors">
             年表一覧
