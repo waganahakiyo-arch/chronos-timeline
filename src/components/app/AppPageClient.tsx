@@ -439,6 +439,10 @@ export default function AppPageClient() {
           <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
           <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">歴史年表アーカイブ</span>
         </div>
+        {/* 右パネル説明（PC版・ヘッダーと同じ高さ） */}
+        <p className={`hidden md:block text-xs tracking-widest transition-all duration-500 ${
+          tutorialStep === 2 ? 'text-paper-100 animate-pulse' : 'text-sepia-500'
+        }`}>右パネルで歴史イベントをクリックして年表に追加</p>
         <nav className="flex items-center gap-4 md:gap-6">
           <Link
             href="/timelines"
@@ -776,10 +780,6 @@ export default function AppPageClient() {
               </button>
               <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
             </div>
-            {/* PC：右パネル説明 */}
-            <p className={`hidden md:block px-5 pt-2 text-xs tracking-widest transition-all duration-500 ${
-              tutorialStep === 2 ? 'text-paper-100 animate-pulse' : 'text-sepia-500'
-            }`}>右パネルで歴史イベントをクリックして年表に追加</p>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
             <span className="text-sepia-300 text-xs tracking-wider mr-1 flex-shrink-0">絞込：</span>
