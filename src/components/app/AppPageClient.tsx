@@ -863,12 +863,12 @@ export default function AppPageClient() {
                   return (
                     <div key={year} className="flex border-b border-sepia-700/10 items-stretch">
                       {/* 編集側 */}
-                      <div className="flex-1 px-2 py-1.5 min-h-[2rem]">
+                      <div className="flex-1 min-w-0 px-2 py-1.5 min-h-[2rem]">
                         <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider">{year}年</span>
                         {editEvs.map(ev => (
-                          <div key={ev.id} className="flex items-center gap-1 mt-0.5 group/ev">
+                          <div key={ev.id} className="flex items-center gap-1 mt-0.5 group/ev min-w-0">
                             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
-                            <span className="text-paper-200 text-[11px] truncate flex-1">{ev.title}</span>
+                            <span className="text-paper-200 text-[11px] truncate flex-1 min-w-0">{ev.title}</span>
                             <button
                               onClick={() => removeEvent(ev.id)}
                               className="flex-shrink-0 opacity-0 group-hover/ev:opacity-100 transition-all bg-vermilion text-white hover:bg-vermilion-light rounded px-2.5 py-1.5 text-base font-bold leading-none ring-2 ring-vermilion/50 shadow-[0_0_8px_4px_rgba(220,80,60,0.5)]"
@@ -879,12 +879,12 @@ export default function AppPageClient() {
                       </div>
                       <div className="w-px bg-sepia-700/20 flex-shrink-0" />
                       {/* 比較側 */}
-                      <div className="flex-1 px-2 py-1.5 min-h-[2rem]">
+                      <div className="flex-1 min-w-0 px-2 py-1.5 min-h-[2rem]">
                         <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider">{year}年</span>
                         {cmpEvs.map((ev, i) => (
-                          <div key={i} className="flex items-center gap-1 mt-0.5">
+                          <div key={i} className="flex items-center gap-1 mt-0.5 min-w-0">
                             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
-                            <span className="text-sepia-400 text-[11px] truncate">{ev.title}</span>
+                            <span className="text-sepia-400 text-[11px] truncate min-w-0 flex-1">{ev.title}</span>
                           </div>
                         ))}
                       </div>
