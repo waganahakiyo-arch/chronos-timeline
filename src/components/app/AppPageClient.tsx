@@ -880,7 +880,7 @@ export default function AppPageClient() {
                       <div className="w-px bg-sepia-700/20 flex-shrink-0" />
                       {/* 比較側 */}
                       <div className="flex-1 px-2 py-1.5 min-h-[2rem]">
-                        <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider invisible">{year}年</span>
+                        <span className="text-green-400 font-bold text-[10px] tabular-nums tracking-wider">{year}年</span>
                         {cmpEvs.map((ev, i) => (
                           <div key={i} className="flex items-center gap-1 mt-0.5">
                             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_DOT[ev.category as Category] ?? 'bg-sepia-500'}`} />
