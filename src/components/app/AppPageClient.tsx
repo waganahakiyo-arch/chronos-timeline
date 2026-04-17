@@ -439,12 +439,12 @@ export default function AppPageClient() {
           <h1 className="text-base md:text-lg font-bold tracking-widest text-paper-100">年代記</h1>
           <span className="text-sepia-600 text-xs tracking-wider hidden sm:block">歴史年表アーカイブ</span>
         </div>
-        <nav className="flex items-center gap-4 md:gap-6">
+        <nav className="flex items-center gap-2 md:gap-6">
           <Link
             href="/timelines"
             className="text-sepia-300 hover:text-paper-100 text-xs md:text-sm tracking-wider transition-colors"
           >
-            年表一覧
+            <span className="hidden sm:inline">年表</span>一覧
           </Link>
           <div className="relative">
             <Link
