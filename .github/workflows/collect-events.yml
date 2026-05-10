@@ -1,0 +1,53 @@
+name: 歴史イベント自動収集
+
+on:
+  # 毎月1日 午前2時（JST）に自動実行
+  schedule:
+    - cron: '0 17 1 * *'  # UTC 17:00 = JST 02:00
+
+  # 手動実行（カテゴリ指定も可能）
+  workflow_dispatch:
+    inputs:
+      category:
+        description: '実行するカテゴリ（空欄 = 全カテゴリ）'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - '日本の歴史'
+          - 'ヨーロッパの歴史'
+          - '中東の歴史'
+          - '中国の歴史'
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 依存パッケージをインストール
+        run: npm ci
+
+      - name: 歴史イベントを収集して Supabase に保存
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CATEGORY: ${{ github.event.inputs.category }}
+        run: npx tsx scripts/collect-events/index.ts
+
+      - name: 実行結果をサマリーに記録
+        if: always()
+        run: |
+          echo "## 収集結果" >> $GITHUB_STEP_SUMMARY
+          echo "- 実行日時: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- カテゴリ: ${{ github.event.inputs.category || '全カテゴリ' }}" >> $GITHUB_STEP_SUMMARY
