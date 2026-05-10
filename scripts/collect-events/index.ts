@@ -11,6 +11,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
 import {
   WIKIDATA_ENDPOINT,
   JAPAN_QUERY,
@@ -20,8 +22,21 @@ import {
 } from './queries.js'
 import { toMasterEvent, type WikidataRow, type MasterEvent } from './classify.js'
 
+// ── .env.local を自動ロード（ローカル実行時）────────────────────────
+const envPath = resolve(process.cwd(), '.env.local')
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const m = line.match(/^([^#=]+)=(.*)$/)
+    if (m) {
+      const key = m[1].trim()
+      const val = m[2].trim().replace(/^"(.*)"$/, '$1')
+      if (!process.env[key]) process.env[key] = val
+    }
+  }
+}
+
 // ── 設定 ────────────────────────────────────────────────────────────
-const SUPABASE_URL = process.env.SUPABASE_URL ?? ''
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 const TARGET_CATEGORY = process.env.CATEGORY ?? null  // null = 全カテゴリ
 
@@ -79,10 +94,14 @@ async function fetchWikidata(sparql: string, category: string): Promise<MasterEv
       const rows = json.results.bindings
       console.log(`  → ${rows.length} 件取得`)
 
+      const seen = new Set<string>()
       const events: MasterEvent[] = []
       for (const row of rows) {
         const ev = toMasterEvent(row, category)
-        if (ev) events.push(ev)
+        if (ev && !seen.has(ev.wikidata_id)) {
+          seen.add(ev.wikidata_id)
+          events.push(ev)
+        }
       }
       console.log(`  → ${events.length} 件変換成功（日本語ラベルあり）`)
       return events
