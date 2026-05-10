@@ -67,7 +67,7 @@ async function fetchWikidata(sparql: string, category: string): Promise<MasterEv
 
       if (!res.ok) {
         const msg = `Wikidata クエリ失敗: ${res.status} ${res.statusText}`
-        if (attempt < MAX_RETRY && (res.status === 502 || res.status === 503 || res.status === 504)) {
+        if (attempt < MAX_RETRY) {
           console.warn(`  ⚠ ${msg} → ${30 * attempt}秒後にリトライ`)
           await new Promise(r => setTimeout(r, 30_000 * attempt))
           continue

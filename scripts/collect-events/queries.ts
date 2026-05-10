@@ -1,62 +1,35 @@
 /**
- * Wikidata SPARQL クエリ定義
- * 各カテゴリの歴史イベントを取得する
+ * Wikidata SPARQL クエリ定義（軽量版）
  *
- * P279*（推移的サブクラス）は Wikidata SPARQL のタイムアウト原因になるため除去。
- * wdt:P31 (instance of) のみを使用し、代わりに対象 QID を広めに列挙する。
+ * タイムアウト対策のため以下を意図的に省略：
+ *   - GROUP_CONCAT（国名集約）
+ *   - OPTIONAL（説明文・Wikipedia URL）
+ *   - DISTINCT
+ *   - P279*（推移的サブクラス）
+ *   - SERVICE wikibase:label
+ *
+ * 取得するのは id・年・タイトルのみ。説明文等は将来の別クエリで補完。
  */
 
 export const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql'
 
-/** 共通 SPARQL ヘルパー：年・タイトル・説明・Wikipedia URL・国名を取得 */
-function buildQuery(whereClause: string, limit = 20000): string {
+function buildQuery(whereClause: string, limit = 10000): string {
   return `
-SELECT DISTINCT
-  ?event
-  ?eventLabel
-  ?eventDescription
-  (YEAR(?date) AS ?year)
-  ?article
-  (GROUP_CONCAT(DISTINCT ?countryLabel; SEPARATOR=",") AS ?countries)
-WHERE {
+SELECT ?event (YEAR(?date) AS ?year) ?label WHERE {
   ${whereClause}
 
-  ?event wdt:P585 | wdt:P571 | wdt:P580 ?date .
-  FILTER(YEAR(?date) >= -3000 && YEAR(?date) <= 2030)
+  ?event wdt:P585 ?date .
+  FILTER(YEAR(?date) >= -500 && YEAR(?date) <= 2030)
 
-  # 日本語ラベルがあるもののみ
-  ?event rdfs:label ?eventLabel .
-  FILTER(LANG(?eventLabel) = "ja")
-
-  # 説明文（任意）
-  OPTIONAL {
-    ?event schema:description ?eventDescription .
-    FILTER(LANG(?eventDescription) = "ja")
-  }
-
-  # 日本語 Wikipedia リンク（任意）
-  OPTIONAL {
-    ?article schema:about ?event .
-    ?article schema:isPartOf <https://ja.wikipedia.org/> .
-  }
-
-  # 現在の国名（任意）
-  OPTIONAL {
-    ?event wdt:P17 ?country .
-    ?country rdfs:label ?countryLabel .
-    FILTER(LANG(?countryLabel) = "ja")
-  }
-
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "ja" }
+  ?event rdfs:label ?label .
+  FILTER(LANG(?label) = "ja")
 }
-GROUP BY ?event ?eventLabel ?eventDescription ?date ?article
+ORDER BY ?year
 LIMIT ${limit}
 `
 }
 
-/** 日本の歴史
- *  wdt:P31 のみ（P279* なし）で十分な QID を列挙
- */
+/** 日本の歴史 */
 export const JAPAN_QUERY = buildQuery(`
   ?event wdt:P31 ?type .
   VALUES ?type {
@@ -64,32 +37,53 @@ export const JAPAN_QUERY = buildQuery(`
     wd:Q132821    # battle
     wd:Q13418847  # historical event
     wd:Q350604    # armed conflict
-    wd:Q178561    # battle (synonym)
-    wd:Q831663    # political party founding
     wd:Q7735147   # revolution
     wd:Q2912397   # coup d'état
     wd:Q3882219   # natural disaster
-    wd:Q8065      # disaster
-    wd:Q16466660  # Japanese historical event
-    wd:Q1190554   # occurrence
-    wd:Q3001412   # ceremony
     wd:Q2001305   # treaty
-    wd:Q625994    # international treaty
   }
-  ?event wdt:P17 wd:Q17 .  # 日本
+  ?event wdt:P17 wd:Q17 .
 `)
 
-/** ヨーロッパの歴史 */
+/** ヨーロッパの歴史（主要国を明示列挙してコンチネント結合を回避） */
 export const EUROPE_QUERY = buildQuery(`
   ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
+    wd:Q7735147 wd:Q2912397 wd:Q2001305
   }
   ?event wdt:P17 ?country .
-  # ヨーロッパの国（大陸: Q46）
-  ?country wdt:P30 wd:Q46 .
+  VALUES ?country {
+    wd:Q145  # イギリス
+    wd:Q142  # フランス
+    wd:Q183  # ドイツ
+    wd:Q38   # イタリア
+    wd:Q29   # スペイン
+    wd:Q31   # ベルギー
+    wd:Q55   # オランダ
+    wd:Q35   # デンマーク
+    wd:Q34   # スウェーデン
+    wd:Q33   # フィンランド
+    wd:Q20   # ノルウェー
+    wd:Q40   # オーストリア
+    wd:Q36   # ポーランド
+    wd:Q28   # ハンガリー
+    wd:Q218  # ルーマニア
+    wd:Q219  # ブルガリア
+    wd:Q214  # スロバキア
+    wd:Q213  # チェコ
+    wd:Q191  # エストニア
+    wd:Q211  # ラトビア
+    wd:Q37   # リトアニア
+    wd:Q39   # スイス
+    wd:Q45   # ポルトガル
+    wd:Q189  # アイスランド
+    wd:Q41   # ギリシャ
+    wd:Q403  # セルビア
+    wd:Q236  # モンテネグロ
+    wd:Q224  # クロアチア
+    wd:Q225  # ボスニア・ヘルツェゴビナ
+  }
 `)
 
 /** 中東の歴史 */
@@ -97,24 +91,13 @@ export const MIDDLE_EAST_QUERY = buildQuery(`
   ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305
+    wd:Q7735147 wd:Q2912397 wd:Q2001305
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
-    wd:Q79    # エジプト
-    wd:Q794   # イラン
-    wd:Q796   # イラク
-    wd:Q801   # イスラエル
-    wd:Q858   # シリア
-    wd:Q878   # アラブ首長国連邦
-    wd:Q805   # サウジアラビア
-    wd:Q810   # ヨルダン
-    wd:Q822   # レバノン
-    wd:Q843   # パキスタン
-    wd:Q977   # バーレーン
-    wd:Q399   # アルメニア
-    wd:Q244   # トルコ
+    wd:Q79   wd:Q794  wd:Q796  wd:Q801
+    wd:Q858  wd:Q805  wd:Q810  wd:Q822
+    wd:Q843  wd:Q399  wd:Q244  wd:Q977
   }
 `)
 
@@ -123,13 +106,10 @@ export const CHINA_QUERY = buildQuery(`
   ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397 wd:Q3882219
-    wd:Q1190554 wd:Q2001305
+    wd:Q7735147 wd:Q2912397 wd:Q3882219
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
-    wd:Q29520  # 中国
-    wd:Q865    # 台湾
-    wd:Q148    # 中華人民共和国
+    wd:Q29520 wd:Q865 wd:Q148
   }
 `)

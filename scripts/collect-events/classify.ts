@@ -39,14 +39,11 @@ export function getEra(year: number, category: string): Era {
   return '現代'
 }
 
-/** Wikidata の結果行 */
+/** Wikidata の結果行（軽量版：id・年・タイトルのみ） */
 export interface WikidataRow {
-  event: { value: string }         // URI: http://www.wikidata.org/entity/QID
-  eventLabel: { value: string }
-  eventDescription?: { value: string }
+  event: { value: string }   // URI: http://www.wikidata.org/entity/QID
+  label: { value: string }   // 日本語ラベル
   year: { value: string }
-  article?: { value: string }      // 日本語 Wikipedia URL
-  countries?: { value: string }    // カンマ区切り国名
 }
 
 export interface MasterEvent {
@@ -66,34 +63,22 @@ export function toMasterEvent(row: WikidataRow, category: string): MasterEvent |
   const year = parseInt(row.year.value, 10)
   if (isNaN(year)) return null
 
-  const title = row.eventLabel.value.trim()
+  const title = row.label.value.trim()
   if (!title) return null
 
   // QID を抽出
   const qid = row.event.value.replace('http://www.wikidata.org/entity/', '')
   if (!qid.startsWith('Q')) return null
 
-  // キーワード：国名（重複除去・空除去）
-  const keywords = row.countries
-    ? Array.from(new Set(
-        row.countries.value
-          .split(',')
-          .map(s => s.trim())
-          .filter(s => s.length > 0 && s.length < 30)
-      ))
-    : []
-
-  const wikiUrl = row.article?.value ?? null
-
   return {
     id: qid,
     year,
     title,
-    description: row.eventDescription?.value?.trim() ?? null,
+    description: null,
     category,
     era: getEra(year, category),
-    keywords,
-    wiki_url: wikiUrl,
+    keywords: [],
+    wiki_url: null,
     wikidata_id: qid,
   }
 }
