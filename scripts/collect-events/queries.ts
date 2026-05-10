@@ -1,12 +1,15 @@
 /**
  * Wikidata SPARQL クエリ定義
  * 各カテゴリの歴史イベントを取得する
+ *
+ * P279*（推移的サブクラス）は Wikidata SPARQL のタイムアウト原因になるため除去。
+ * wdt:P31 (instance of) のみを使用し、代わりに対象 QID を広めに列挙する。
  */
 
 export const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql'
 
 /** 共通 SPARQL ヘルパー：年・タイトル・説明・Wikipedia URL・国名を取得 */
-function buildQuery(whereClause: string, limit = 50000): string {
+function buildQuery(whereClause: string, limit = 20000): string {
   return `
 SELECT DISTINCT
   ?event
@@ -51,30 +54,38 @@ LIMIT ${limit}
 `
 }
 
-/** 日本の歴史 */
+/** 日本の歴史
+ *  wdt:P31 のみ（P279* なし）で十分な QID を列挙
+ */
 export const JAPAN_QUERY = buildQuery(`
-  ?event wdt:P31/wdt:P279* ?type .
+  ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198       # war
     wd:Q132821    # battle
     wd:Q13418847  # historical event
     wd:Q350604    # armed conflict
-    wd:Q178561    # battle
+    wd:Q178561    # battle (synonym)
     wd:Q831663    # political party founding
     wd:Q7735147   # revolution
     wd:Q2912397   # coup d'état
     wd:Q3882219   # natural disaster
-    wd:Q8065      # natural disaster
+    wd:Q8065      # disaster
+    wd:Q16466660  # Japanese historical event
+    wd:Q1190554   # occurrence
+    wd:Q3001412   # ceremony
+    wd:Q2001305   # treaty
+    wd:Q625994    # international treaty
   }
   ?event wdt:P17 wd:Q17 .  # 日本
 `)
 
 /** ヨーロッパの歴史 */
 export const EUROPE_QUERY = buildQuery(`
-  ?event wdt:P31/wdt:P279* ?type .
+  ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
     wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305 wd:Q625994
   }
   ?event wdt:P17 ?country .
   # ヨーロッパの国（大陸: Q46）
@@ -83,10 +94,11 @@ export const EUROPE_QUERY = buildQuery(`
 
 /** 中東の歴史 */
 export const MIDDLE_EAST_QUERY = buildQuery(`
-  ?event wdt:P31/wdt:P279* ?type .
+  ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
     wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -100,9 +112,7 @@ export const MIDDLE_EAST_QUERY = buildQuery(`
     wd:Q810   # ヨルダン
     wd:Q822   # レバノン
     wd:Q843   # パキスタン
-    wd:Q833   # マレーシア
     wd:Q977   # バーレーン
-    wd:Q783   # ホンジュラス
     wd:Q399   # アルメニア
     wd:Q244   # トルコ
   }
@@ -110,10 +120,11 @@ export const MIDDLE_EAST_QUERY = buildQuery(`
 
 /** 中国の歴史 */
 export const CHINA_QUERY = buildQuery(`
-  ?event wdt:P31/wdt:P279* ?type .
+  ?event wdt:P31 ?type .
   VALUES ?type {
     wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
     wd:Q178561 wd:Q7735147 wd:Q2912397 wd:Q3882219
+    wd:Q1190554 wd:Q2001305
   }
   ?event wdt:P17 ?country .
   VALUES ?country {

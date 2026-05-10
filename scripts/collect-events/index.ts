@@ -44,33 +44,60 @@ function getSupabase() {
   return createClient(SUPABASE_URL, SUPABASE_KEY)
 }
 
-// ── Wikidata SPARQL 取得 ─────────────────────────────────────────────
+// ── Wikidata SPARQL 取得（リトライ付き）────────────────────────────
 async function fetchWikidata(sparql: string, category: string): Promise<MasterEvent[]> {
   const url = `${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(sparql)}&format=json`
-  console.log(`  → Wikidata へクエリ送信 [${category}]`)
+  const MAX_RETRY = 3
 
-  const res = await fetch(url, {
-    headers: {
-      'Accept': 'application/sparql-results+json',
-      'User-Agent': 'chronos-timeline-collector/1.0 (https://github.com/waganahakiyo-arch/chronos-timeline)',
-    },
-  })
+  for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+    console.log(`  → Wikidata へクエリ送信 [${category}]${attempt > 1 ? ` (試行 ${attempt}/${MAX_RETRY})` : ''}`)
 
-  if (!res.ok) {
-    throw new Error(`Wikidata クエリ失敗: ${res.status} ${res.statusText}`)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 120_000) // 120秒タイムアウト
+
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/sparql-results+json',
+          'User-Agent': 'chronos-timeline-collector/1.0 (https://github.com/waganahakiyo-arch/chronos-timeline)',
+        },
+      })
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        const msg = `Wikidata クエリ失敗: ${res.status} ${res.statusText}`
+        if (attempt < MAX_RETRY && (res.status === 502 || res.status === 503 || res.status === 504)) {
+          console.warn(`  ⚠ ${msg} → ${30 * attempt}秒後にリトライ`)
+          await new Promise(r => setTimeout(r, 30_000 * attempt))
+          continue
+        }
+        throw new Error(msg)
+      }
+
+      const json = await res.json() as { results: { bindings: WikidataRow[] } }
+      const rows = json.results.bindings
+      console.log(`  → ${rows.length} 件取得`)
+
+      const events: MasterEvent[] = []
+      for (const row of rows) {
+        const ev = toMasterEvent(row, category)
+        if (ev) events.push(ev)
+      }
+      console.log(`  → ${events.length} 件変換成功（日本語ラベルあり）`)
+      return events
+
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      if (attempt < MAX_RETRY && (err.name === 'AbortError' || err.message?.includes('abort'))) {
+        console.warn(`  ⚠ タイムアウト → ${30 * attempt}秒後にリトライ`)
+        await new Promise(r => setTimeout(r, 30_000 * attempt))
+        continue
+      }
+      throw err
+    }
   }
-
-  const json = await res.json() as { results: { bindings: WikidataRow[] } }
-  const rows = json.results.bindings
-  console.log(`  → ${rows.length} 件取得`)
-
-  const events: MasterEvent[] = []
-  for (const row of rows) {
-    const ev = toMasterEvent(row, category)
-    if (ev) events.push(ev)
-  }
-  console.log(`  → ${events.length} 件変換成功（日本語ラベルあり）`)
-  return events
+  throw new Error(`${MAX_RETRY}回リトライしましたが失敗しました`)
 }
 
 // ── Supabase upsert ──────────────────────────────────────────────────
