@@ -112,11 +112,13 @@ export default function AppPageClient() {
 
   const fetchMasterEvents = useCallback(async (category: Category | null, from: string, to: string) => {
     setIsMasterLoading(true)
+    // カテゴリ指定あり or 年範囲指定あり → 上限を緩める。全件無指定は5000上限
+    const limit = (category || from !== '' || to !== '') ? 5000 : 5000
     let query = (supabase as any)
       .from('master_events')
       .select('id, year, title, description, category, era, keywords, wiki_url')
       .order('year', { ascending: true })
-      .limit(1000)
+      .limit(limit)
     if (category) query = query.eq('category', category)
     if (from !== '') query = query.gte('year', parseInt(from))
     if (to !== '') query = query.lte('year', parseInt(to))
