@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { historicalEvents, CATEGORIES, ERAS, CATEGORY_COLORS, CATEGORY_DOT } from '@/data/events'
+import { CATEGORIES, ERAS, CATEGORY_COLORS, CATEGORY_DOT } from '@/data/events'
 import type { Timeline, TimelineEvent, Category, Era, HistoricalEvent, UserEvent } from '@/types'
 
 type MasterEvent = HistoricalEvent & { event_date?: string | null; isUserEvent?: boolean }
@@ -60,6 +60,12 @@ export default function AppPageClient() {
   // モバイル用パネル切り替え
   const [leftOpen, setLeftOpen] = useState(true)
 
+  // 右パネル：master_events
+  const [masterEventsFromDB, setMasterEventsFromDB] = useState<HistoricalEvent[]>([])
+  const [isMasterLoading, setIsMasterLoading] = useState(false)
+  const [yearFrom, setYearFrom] = useState('')
+  const [yearTo, setYearTo] = useState('')
+
   // 左パネル比較列
   const [compareMode, setCompareMode] = useState(false)
   const [compareSourceType, setCompareSourceType] = useState<'category' | 'timeline'>('category')
@@ -102,6 +108,31 @@ export default function AppPageClient() {
       .eq('user_id', uid)
       .order('year', { ascending: true })
     if (data) setUserEvents(data)
+  }, [supabase])
+
+  const fetchMasterEvents = useCallback(async (category: Category | null, from: string, to: string) => {
+    setIsMasterLoading(true)
+    let query = (supabase as any)
+      .from('master_events')
+      .select('id, year, title, description, category, era, keywords, wiki_url')
+      .order('year', { ascending: true })
+      .limit(1000)
+    if (category) query = query.eq('category', category)
+    if (from !== '') query = query.gte('year', parseInt(from))
+    if (to !== '') query = query.lte('year', parseInt(to))
+    const { data } = await query
+    const events: HistoricalEvent[] = (data ?? []).map((ev: any) => ({
+      id: ev.id,
+      year: ev.year,
+      title: ev.title,
+      description: ev.description ?? undefined,
+      category: ev.category as Category,
+      era: (ev.era ?? '現代') as Era,
+      keywords: ev.keywords ?? undefined,
+      wikiUrl: ev.wiki_url ?? undefined,
+    }))
+    setMasterEventsFromDB(events)
+    setIsMasterLoading(false)
   }, [supabase])
 
   // ─── 年表操作 ────────────────────────────────────────────────────
@@ -362,6 +393,14 @@ export default function AppPageClient() {
     router.push('/')
   }
 
+  // ─── master_events 取得（カテゴリ・年範囲変更時にデバウンス再取得）───
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchMasterEvents(categoryFilter, yearFrom, yearTo)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [categoryFilter, yearFrom, yearTo, fetchMasterEvents])
+
   // ─── フィルタリング済みイベント ───────────────────────────────────
   const [keywordFilters, setKeywordFilters] = useState<string[]>([])
   const [keywordBarOpen, setKeywordBarOpen] = useState(false)
@@ -398,8 +437,8 @@ export default function AppPageClient() {
   , [userEvents])
 
   const allMasterEvents = useMemo<MasterEvent[]>(
-    () => [...historicalEvents, ...userEventsAsHistorical],
-    [userEventsAsHistorical]
+    () => [...masterEventsFromDB, ...userEventsAsHistorical],
+    [masterEventsFromDB, userEventsAsHistorical]
   )
 
   const filteredByCategory = categoryFilter
@@ -446,26 +485,28 @@ export default function AppPageClient() {
     return Array.from(yearSet).sort((a, b) => a - b)
   }, [compareMode, currentEvents, compareDisplayEvents])
 
-  // 比較列のイベントを読み込む（allMasterEvents の後に配置）
+  // 比較列のイベントを読み込む
   useEffect(() => {
     if (!compareMode) { setCompareDisplayEvents([]); return }
-    if (compareSourceType === 'category') {
-      setCompareDisplayEvents(
-        allMasterEvents
-          .filter(e => e.category === compareSourceId)
-          .map(e => ({ year: e.year, title: e.title, category: e.category, event_date: e.event_date ?? null }))
-      )
-    } else {
-      ;(async () => {
+    ;(async () => {
+      if (compareSourceType === 'category') {
+        const { data } = await (supabase as any)
+          .from('master_events')
+          .select('year, title, category')
+          .eq('category', compareSourceId)
+          .order('year', { ascending: true })
+          .limit(2000)
+        setCompareDisplayEvents((data ?? []).map((e: any) => ({ ...e, event_date: null })))
+      } else {
         const { data } = await supabase
           .from('timeline_events')
           .select('year, title, category, event_date')
           .eq('timeline_id', compareSourceId)
           .order('year', { ascending: true })
         setCompareDisplayEvents(data ?? [])
-      })()
-    }
-  }, [compareMode, compareSourceType, compareSourceId, allMasterEvents])
+      }
+    })()
+  }, [compareMode, compareSourceType, compareSourceId, supabase])
 
   // ─── レンダリング ─────────────────────────────────────────────────
   return (
@@ -918,7 +959,7 @@ export default function AppPageClient() {
               >
                 {saving ? '…' : '保存'}
               </button>
-              <span className="text-sepia-500 text-xs flex-shrink-0">{filteredEvents.length}件</span>
+              <span className="text-sepia-500 text-xs flex-shrink-0">{isMasterLoading ? '…' : `${filteredEvents.length}件`}</span>
             </div>
             {/* カテゴリフィルター */}
             <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 overflow-x-auto md:flex-wrap scrollbar-none">
@@ -947,6 +988,24 @@ export default function AppPageClient() {
               </button>
             ))}
             <div className="ml-auto flex-shrink-0 hidden md:flex items-center gap-3">
+              {/* 年範囲フィルター */}
+              <div className="flex items-center gap-1 text-xs">
+                <input
+                  type="number"
+                  placeholder="From"
+                  value={yearFrom}
+                  onChange={e => setYearFrom(e.target.value)}
+                  className="w-16 px-1.5 py-1 bg-ink-800 border border-sepia-700/40 text-sepia-300 rounded-sm text-xs text-center focus:outline-none focus:border-sepia-500/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-sepia-600">〜</span>
+                <input
+                  type="number"
+                  placeholder="To"
+                  value={yearTo}
+                  onChange={e => setYearTo(e.target.value)}
+                  className="w-16 px-1.5 py-1 bg-ink-800 border border-sepia-700/40 text-sepia-300 rounded-sm text-xs text-center focus:outline-none focus:border-sepia-500/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
               <div className="flex border border-sepia-700/40 rounded-sm overflow-hidden" title="日付表示形式">
                 {([1, 2, 3] as const).map(f => (
                   <button
@@ -961,7 +1020,9 @@ export default function AppPageClient() {
                   </button>
                 ))}
               </div>
-              <span className="text-sepia-400 text-xs">{filteredEvents.length} 件</span>
+              <span className="text-sepia-400 text-xs">
+                {isMasterLoading ? '…' : `${filteredEvents.length} 件`}
+              </span>
               <button
                 onClick={() => addAllFiltered(filteredEvents)}
                 className="px-3 py-1 text-xs tracking-wider border border-sepia-700/40 text-sepia-300 hover:border-vermilion/50 hover:text-vermilion rounded-sm transition-colors"
