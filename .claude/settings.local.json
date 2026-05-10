@@ -70,7 +70,17 @@
       "Bash(npm --version)",
       "Bash(claude doctor:*)",
       "Bash(curl:*)",
-      "Bash(cmd /c \"taskkill /PID 6976 /F\")"
+      "Bash(cmd /c \"taskkill /PID 6976 /F\")",
+      "Bash(gh repo:*)",
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find /c/Users/vsxxx/chronos-timeline -type f \\\\\\(-name *.json -o -name *.csv -o -name *.tsv \\\\\\) -not -path ./.next/* -not -path ./.git/* -not -path ./node_modules/*)",
+      "Bash(npx kill-port:*)",
+      "Bash(vercel --version)",
+      "Bash(vercel redeploy:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }

@@ -80,7 +80,7 @@ async function upsertEvents(supabase: ReturnType<typeof createClient>, events: M
     const batch = events.slice(i, i + UPSERT_BATCH)
     const { error } = await supabase
       .from('master_events')
-      .upsert(batch, { onConflict: 'wikidata_id' })
+      .upsert(batch as any[], { onConflict: 'wikidata_id' })
 
     if (error) {
       console.error(`  ✗ upsert エラー (batch ${i}–${i + batch.length}):`, error.message)
