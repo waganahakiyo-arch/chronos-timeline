@@ -1,10 +1,11 @@
 /**
  * Wikidata SPARQL クエリ定義
  *
- * タイムアウト対策のため軽量構成を維持：
- *   - wdt:P31 のみ（P279* なし）
- *   - OPTIONAL/GROUP_CONCAT/SERVICE wikibase:label なし
- *   - 取得フィールドは event / year / label のみ
+ * 改善点:
+ *   - P585（時点）と P580（開始日）を UNION で両対応
+ *   - SERVICE wikibase:label で ja,en フォールバック
+ *   - 選挙・地震・条約・クーデター等の追加タイプ
+ *   - グローバルクエリ（国フィルターなし）を追加
  */
 
 export const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql'
@@ -17,27 +18,36 @@ export function buildQuery(
   limit = 5000
 ): string {
   return `
-SELECT ?event (YEAR(?date) AS ?year) ?label WHERE {
+SELECT ?event (YEAR(?date) AS ?year) ?eventLabel WHERE {
   ${whereClause}
-  ?event wdt:P585 ?date .
+  { ?event wdt:P585 ?date } UNION { ?event wdt:P580 ?date . FILTER NOT EXISTS { ?event wdt:P585 [] } }
   FILTER(YEAR(?date) >= ${yearFrom} && YEAR(?date) <= ${yearTo})
-  ?event rdfs:label ?label .
-  FILTER(LANG(?label) = "ja")
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "ja,en" }
 }
 ORDER BY ?year
 LIMIT ${limit}
 `
 }
 
+// ── 共通タイプリスト ────────────────────────────────────────────────
+// 歴史的出来事として有意義なタイプ
+const COMMON_TYPES = `
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q3882219 wd:Q2001305 wd:Q625994
+    wd:Q16466660 wd:Q1190554 wd:Q40231
+    wd:Q7944 wd:Q131569 wd:Q45382
+    wd:Q3199915 wd:Q124757 wd:Q49776
+    wd:Q188055 wd:Q8068 wd:Q171558
+`
+
 // ── カテゴリごとの WHERE 句 ──────────────────────────────────────────
 
 const JAPAN_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q3882219 wd:Q2001305 wd:Q625994
-    wd:Q16466660 wd:Q1190554
+${COMMON_TYPES}
+    wd:Q12890393
   }
   ?event wdt:P17 wd:Q17 .
 `
@@ -45,9 +55,7 @@ const JAPAN_WHERE = `
 const EUROPE_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -63,9 +71,7 @@ const EUROPE_WHERE = `
 const MIDDLE_EAST_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -78,8 +84,7 @@ const MIDDLE_EAST_WHERE = `
 const CHINA_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397 wd:Q3882219
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country { wd:Q29520 wd:Q865 wd:Q148 }
@@ -88,9 +93,7 @@ const CHINA_WHERE = `
 const KOREA_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country { wd:Q884 wd:Q423 }
@@ -99,9 +102,7 @@ const KOREA_WHERE = `
 const SOUTH_ASIA_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -112,9 +113,7 @@ const SOUTH_ASIA_WHERE = `
 const SOUTHEAST_ASIA_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -126,10 +125,7 @@ const SOUTHEAST_ASIA_WHERE = `
 const AMERICAS_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
-    wd:Q3882219
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
@@ -141,15 +137,62 @@ const AMERICAS_WHERE = `
 const RUSSIA_WHERE = `
   ?event wdt:P31 ?type .
   VALUES ?type {
-    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
-    wd:Q178561 wd:Q7735147 wd:Q2912397
-    wd:Q1190554 wd:Q2001305 wd:Q625994
-    wd:Q3882219
+${COMMON_TYPES}
   }
   ?event wdt:P17 ?country .
   VALUES ?country {
     wd:Q159 wd:Q212 wd:Q184 wd:Q232 wd:Q265
     wd:Q227 wd:Q230
+  }
+`
+
+const AFRICA_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+${COMMON_TYPES}
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country {
+    wd:Q1028 wd:Q115 wd:Q117 wd:Q916 wd:Q1016
+    wd:Q1049 wd:Q1030 wd:Q1032 wd:Q1033 wd:Q1008
+    wd:Q1006 wd:Q1007 wd:Q1013 wd:Q1014 wd:Q1019
+    wd:Q1020 wd:Q1023 wd:Q1024 wd:Q1025 wd:Q1029
+    wd:Q1031 wd:Q1034 wd:Q1038 wd:Q1039 wd:Q1040
+    wd:Q1041 wd:Q1042 wd:Q1044 wd:Q1045 wd:Q953
+  }
+`
+
+// ── グローバルクエリ（国フィルターなし） ──────────────────────────
+
+const GLOBAL_CONFLICT_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q178561 wd:Q198 wd:Q132821 wd:Q188055
+    wd:Q13418847 wd:Q3882219 wd:Q3199915
+  }
+`
+
+const GLOBAL_POLITICS_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q40231 wd:Q45382 wd:Q131569
+    wd:Q2001305 wd:Q350604
+  }
+`
+
+const GLOBAL_DISASTER_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q7944 wd:Q8068 wd:Q8065 wd:Q168247
+    wd:Q171558 wd:Q179057 wd:Q7692
+  }
+`
+
+const GLOBAL_SOCIETY_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q124757 wd:Q49776 wd:Q1190554
+    wd:Q625994 wd:Q149086
   }
 `
 
@@ -165,6 +208,11 @@ export function makeQueries(yearFrom: number, yearTo: number) {
     { name: '東南アジア・オセアニアの歴史', query: buildQuery(SOUTHEAST_ASIA_WHERE, yearFrom, yearTo) },
     { name: 'アメリカ大陸の歴史',           query: buildQuery(AMERICAS_WHERE,       yearFrom, yearTo) },
     { name: 'ロシア・中央アジアの歴史',     query: buildQuery(RUSSIA_WHERE,         yearFrom, yearTo) },
+    { name: 'アフリカの歴史',               query: buildQuery(AFRICA_WHERE,         yearFrom, yearTo) },
+    { name: '世界の戦争・紛争',             query: buildQuery(GLOBAL_CONFLICT_WHERE, yearFrom, yearTo) },
+    { name: '世界の政治',                   query: buildQuery(GLOBAL_POLITICS_WHERE, yearFrom, yearTo) },
+    { name: '世界の天災',                   query: buildQuery(GLOBAL_DISASTER_WHERE, yearFrom, yearTo) },
+    { name: '世界の社会運動',               query: buildQuery(GLOBAL_SOCIETY_WHERE,  yearFrom, yearTo) },
   ]
 }
 

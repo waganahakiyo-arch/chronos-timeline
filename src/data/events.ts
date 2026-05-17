@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { Category, Era, HistoricalEvent } from '@/types'
 
-export const CATEGORIES: Category[] = ['日本の歴史', 'ヨーロッパの歴史', '中東の歴史', '中国の歴史', '文化', '経済', '技術', '外交', '人物', '発明・伝播', '創作物', '任天堂の歴史', 'カプコンの歴史', 'SNKの歴史', 'ベストセラー小説', 'ヒット漫画', 'ヒットソング', 'ヒット映画', '独自イベント']
+export const CATEGORIES: Category[] = ['日本の歴史', 'ヨーロッパの歴史', '中東の歴史', '中国の歴史', '韓国・朝鮮の歴史', '南アジアの歴史', '東南アジア・オセアニアの歴史', 'アメリカ大陸の歴史', 'ロシア・中央アジアの歴史', 'アフリカの歴史', '世界の戦争・紛争', '世界の政治', '世界の天災', '世界の社会運動', '文化', '経済', '技術', '外交', '人物', '発明・伝播', '創作物', '任天堂の歴史', 'カプコンの歴史', 'SNKの歴史', 'ベストセラー小説', 'ヒット漫画', 'ヒットソング', 'ヒット映画', '独自イベント']
 
 export const ERAS: Era[] = [
   '飛鳥奈良',
@@ -43,6 +43,16 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   'ヨーロッパの歴史': 'bg-sky-900/30 text-sky-300 border-sky-700/40',
   '中東の歴史': 'bg-amber-900/40 text-amber-200 border-amber-700/40',
   '中国の歴史': 'bg-red-900/40 text-red-200 border-red-700/40',
+  '韓国・朝鮮の歴史': 'bg-orange-900/30 text-orange-200 border-orange-700/40',
+  '南アジアの歴史': 'bg-yellow-900/30 text-yellow-200 border-yellow-700/40',
+  '東南アジア・オセアニアの歴史': 'bg-green-900/40 text-green-200 border-green-700/40',
+  'アメリカ大陸の歴史': 'bg-blue-900/30 text-blue-200 border-blue-700/40',
+  'ロシア・中央アジアの歴史': 'bg-slate-800/50 text-slate-200 border-slate-600/40',
+  'アフリカの歴史': 'bg-amber-800/40 text-amber-200 border-amber-600/40',
+  '世界の戦争・紛争': 'bg-red-900/40 text-red-200 border-red-700/40',
+  '世界の政治': 'bg-teal-900/30 text-teal-200 border-teal-700/40',
+  '世界の天災': 'bg-orange-900/40 text-orange-200 border-orange-600/40',
+  '世界の社会運動': 'bg-purple-900/30 text-purple-200 border-purple-700/40',
   '独自イベント': 'bg-violet-900/30 text-violet-300 border-violet-700/40',
 }
 
@@ -66,6 +76,16 @@ export const CATEGORY_DOT: Record<Category, string> = {
   'ヨーロッパの歴史': 'bg-sky-400',
   '中東の歴史': 'bg-amber-300',
   '中国の歴史': 'bg-red-400',
+  '韓国・朝鮮の歴史': 'bg-orange-400',
+  '南アジアの歴史': 'bg-yellow-400',
+  '東南アジア・オセアニアの歴史': 'bg-green-400',
+  'アメリカ大陸の歴史': 'bg-blue-400',
+  'ロシア・中央アジアの歴史': 'bg-slate-400',
+  'アフリカの歴史': 'bg-amber-500',
+  '世界の戦争・紛争': 'bg-red-500',
+  '世界の政治': 'bg-teal-400',
+  '世界の天災': 'bg-orange-500',
+  '世界の社会運動': 'bg-purple-400',
   '独自イベント': 'bg-violet-400',
 }
 

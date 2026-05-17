@@ -39,10 +39,11 @@ export function getEra(year: number, category: string): Era {
   return '現代'
 }
 
-/** Wikidata の結果行（軽量版：id・年・タイトルのみ） */
+/** Wikidata の結果行（SERVICE wikibase:label 対応） */
 export interface WikidataRow {
-  event: { value: string }   // URI: http://www.wikidata.org/entity/QID
-  label: { value: string }   // 日本語ラベル
+  event: { value: string }         // URI: http://www.wikidata.org/entity/QID
+  eventLabel?: { value: string }   // SERVICE wikibase:label で取得（ja,en フォールバック）
+  label?: { value: string }        // 旧形式互換（rdfs:label 直接取得）
   year: { value: string }
 }
 
@@ -63,8 +64,10 @@ export function toMasterEvent(row: WikidataRow, category: string): MasterEvent |
   const year = parseInt(row.year.value, 10)
   if (isNaN(year)) return null
 
-  const title = row.label.value.trim()
+  const title = (row.eventLabel?.value ?? row.label?.value ?? '').trim()
   if (!title) return null
+  // Wikidata の自動生成ラベル（"QID" 形式）を除外
+  if (/^Q\d+$/.test(title)) return null
 
   // QID を抽出
   const qid = row.event.value.replace('http://www.wikidata.org/entity/', '')
