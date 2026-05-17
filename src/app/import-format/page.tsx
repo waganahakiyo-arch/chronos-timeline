@@ -155,6 +155,20 @@ export default function ImportFormatPage() {
           </div>
         </section>
 
+        {/* AI活用ヒント */}
+        <section className="border border-sepia-700/40 rounded-sm p-5 bg-ink-800/30">
+          <p className="text-paper-200 text-xs font-bold tracking-wider mb-2">💡 AIを使った変換がおすすめ</p>
+          <p className="text-sepia-300 text-sm leading-relaxed">
+            ご利用中のAIサービスに投入したい年表のテキストと、上のサンプルを貼り付けて
+          </p>
+          <p className="my-2 px-3 py-2 bg-ink-950/60 border border-sepia-700/30 rounded-sm text-paper-100 text-sm tracking-wide">
+            「サンプルのフォーマットに変換してください」
+          </p>
+          <p className="text-sepia-300 text-sm leading-relaxed">
+            と指示するだけでインポートファイルを作成できます。
+          </p>
+        </section>
+
         {/* 注意事項 */}
         <section className="text-xs text-sepia-500 space-y-1 border-t border-sepia-700/20 pt-6">
           <p>・ファイル拡張子は <code className="text-sepia-300">.json</code> にしてください。</p>
