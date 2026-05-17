@@ -641,11 +641,11 @@ export default function AppPageClient() {
             {/* モバイル */}
             <p className={`md:hidden text-xs tracking-widest transition-all duration-500 ${
               tutorialStep === 1 ? 'text-paper-100 animate-pulse' : 'text-sepia-400'
-            }`}>編集対象の年表を選んでください</p>
+            }`}>編集対象の年表を選ぶor新規作成</p>
             {/* PC */}
             <p className={`hidden md:block text-xs tracking-widest transition-all duration-500 ${
               tutorialStep === 1 ? 'text-paper-100 animate-pulse' : 'text-sepia-400'
-            }`}>左パネルで編集対象の年表を選ぶ</p>
+            }`}>左パネルで編集対象の年表を選ぶor新規作成</p>
           </div>
           {/* タイトル入力 */}
           <div className="p-4 border-b border-sepia-700/30">
