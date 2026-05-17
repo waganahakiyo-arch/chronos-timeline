@@ -77,6 +77,13 @@ export default function AppPageClient() {
   // 比較ページ訪問済みフラグ（一度訪問したらフキダシ永久スキップ）
   const [compareVisited, setCompareVisited] = useState(false)
 
+  // 右パネルタブ（マスターデータ / 公開年表）
+  const [rightPanelTab, setRightPanelTab] = useState<'master' | 'public'>('master')
+  const [publicTimelinesList, setPublicTimelinesList] = useState<{ id: string; name: string }[]>([])
+  const [selectedPublicTimelineId, setSelectedPublicTimelineId] = useState<string | null>(null)
+  const [publicTimelineEvents, setPublicTimelineEvents] = useState<TimelineEvent[]>([])
+  const [checkedEventIds, setCheckedEventIds] = useState<string[]>([])
+
   // ─── 初期化 ───────────────────────────────────────────────────────
   useEffect(() => {
     ;(async () => {
@@ -109,6 +116,48 @@ export default function AppPageClient() {
       .order('year', { ascending: true })
     if (data) setUserEvents(data)
   }, [supabase])
+
+  const fetchPublicTimelines = useCallback(async (uid: string) => {
+    const { data } = await supabase
+      .from('timelines')
+      .select('id, name, public_until')
+      .eq('is_public', true)
+      .neq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (data) {
+      const now = new Date()
+      setPublicTimelinesList(
+        data.filter((tl: any) => !tl.public_until || new Date(tl.public_until) > now)
+             .map((tl: any) => ({ id: tl.id, name: tl.name }))
+      )
+    }
+  }, [supabase])
+
+  const fetchPublicTimelineEvents = useCallback(async (tlId: string) => {
+    const { data } = await supabase
+      .from('timeline_events')
+      .select('*')
+      .eq('timeline_id', tlId)
+      .order('year', { ascending: true })
+    setPublicTimelineEvents(data ?? [])
+    setCheckedEventIds([])
+  }, [supabase])
+
+  const copyCheckedEvents = () => {
+    const toCopy = publicTimelineEvents.filter(ev => checkedEventIds.includes(ev.id))
+    const newEvs: TimelineEvent[] = toCopy
+      .filter(ev => !currentEvents.some(e => e.year === ev.year && e.title === ev.title))
+      .map(ev => ({
+        ...ev,
+        id: `tmp-${Date.now()}-${Math.random()}`,
+        timeline_id: selectedTimelineId ?? '',
+        created_at: new Date().toISOString(),
+      }))
+    if (newEvs.length === 0) { flash('すでに追加済みのイベントです'); return }
+    setCurrentEvents(prev => [...prev, ...newEvs].sort((a, b) => a.year - b.year))
+    flash(`✦ ${newEvs.length} 件をコピーしました`)
+    setCheckedEventIds([])
+  }
 
   const fetchMasterEvents = useCallback(async (category: Category | null, from: string, to: string) => {
     setIsMasterLoading(true)
@@ -941,6 +990,35 @@ export default function AppPageClient() {
 
         {/* ─── 右パネル：歴史事件リスト ───────────────────────────── */}
         <main className={`${leftOpen ? 'hidden' : 'flex'} md:flex flex-1 flex-col overflow-hidden`}>
+          {/* タブ切り替え */}
+          <div className="flex-shrink-0 flex border-b border-sepia-700/40 bg-ink-900">
+            <button
+              onClick={() => setRightPanelTab('master')}
+              className={`px-4 py-2.5 text-xs tracking-wider border-b-2 transition-colors ${
+                rightPanelTab === 'master'
+                  ? 'border-vermilion text-paper-100'
+                  : 'border-transparent text-sepia-400 hover:text-sepia-300'
+              }`}
+            >
+              マスターデータ
+            </button>
+            <button
+              onClick={() => {
+                setRightPanelTab('public')
+                if (userId) fetchPublicTimelines(userId)
+              }}
+              className={`px-4 py-2.5 text-xs tracking-wider border-b-2 transition-colors ${
+                rightPanelTab === 'public'
+                  ? 'border-vermilion text-paper-100'
+                  : 'border-transparent text-sepia-400 hover:text-sepia-300'
+              }`}
+            >
+              公開年表
+            </button>
+          </div>
+
+          {rightPanelTab === 'master' && (
+          <div className="flex flex-col flex-1 overflow-hidden">
           {/* モバイル：左パネルへ戻るボタン + カテゴリフィルター */}
           <div className="flex-shrink-0 bg-ink-800/50 border-b border-sepia-700/20">
             {/* モバイル用上部バー */}
@@ -1164,6 +1242,136 @@ export default function AppPageClient() {
               </tbody>
             </table>
           </div>
+          </div>
+          )}
+
+          {rightPanelTab === 'public' && (
+            <div className="flex flex-col flex-1 overflow-hidden">
+              {/* 公開年表選択 */}
+              <div className="p-3 border-b border-sepia-700/20 flex-shrink-0 space-y-2">
+                <p className="text-[10px] text-sepia-500 tracking-widest">公開年表を選択</p>
+                <select
+                  value={selectedPublicTimelineId ?? ''}
+                  onChange={e => {
+                    const id = e.target.value || null
+                    setSelectedPublicTimelineId(id)
+                    if (id) fetchPublicTimelineEvents(id)
+                    else { setPublicTimelineEvents([]); setCheckedEventIds([]) }
+                  }}
+                  className="w-full bg-ink-950 border border-sepia-700/40 rounded-sm px-2 py-1.5 text-paper-200 text-xs focus:outline-none focus:border-vermilion/60"
+                >
+                  <option value="">-- 年表を選択してください --</option>
+                  {publicTimelinesList.map(tl => (
+                    <option key={tl.id} value={tl.id}>{tl.name}</option>
+                  ))}
+                </select>
+                {publicTimelinesList.length === 0 && (
+                  <p className="text-sepia-600 text-[10px]">公開されている年表がありません</p>
+                )}
+              </div>
+
+              {/* コピー操作バー */}
+              {selectedPublicTimelineId && publicTimelineEvents.length > 0 && (
+                <div className="px-3 py-2 border-b border-sepia-700/20 flex-shrink-0 flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setCheckedEventIds(publicTimelineEvents.map(e => e.id))}
+                    className="px-2 py-1 text-[10px] border border-sepia-700/40 text-sepia-400 hover:border-sepia-500/60 hover:text-sepia-300 rounded-sm transition-colors"
+                  >
+                    全て選択
+                  </button>
+                  {checkedEventIds.length > 0 && (
+                    <button
+                      onClick={() => setCheckedEventIds([])}
+                      className="px-2 py-1 text-[10px] border border-sepia-700/40 text-sepia-500 hover:text-sepia-400 rounded-sm transition-colors"
+                    >
+                      選択解除
+                    </button>
+                  )}
+                  <span className="text-sepia-600 text-[10px] flex-1">{checkedEventIds.length} 件チェック中</span>
+                  <button
+                    onClick={copyCheckedEvents}
+                    disabled={checkedEventIds.length === 0}
+                    className="px-3 py-1.5 text-[10px] tracking-wider border border-sepia-600/50 text-sepia-300 hover:border-vermilion/50 hover:text-vermilion rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    チェックONのイベントをコピー
+                  </button>
+                </div>
+              )}
+
+              {/* イベント一覧（チェックボックス付き） */}
+              <div className="flex-1 overflow-y-auto">
+                {!selectedPublicTimelineId ? (
+                  <div className="flex items-center justify-center h-full text-sepia-600 text-xs">
+                    <p>年表を選択してください</p>
+                  </div>
+                ) : publicTimelineEvents.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sepia-600 text-xs">
+                    <p>イベントがありません</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm border-collapse">
+                    <thead className="sticky top-0 z-10 bg-ink-900">
+                      <tr className="border-b border-sepia-700/30 text-left text-xs text-sepia-500 tracking-wider">
+                        <th className="px-3 py-2 font-normal w-8">
+                          <input
+                            type="checkbox"
+                            checked={checkedEventIds.length === publicTimelineEvents.length && publicTimelineEvents.length > 0}
+                            onChange={e => setCheckedEventIds(e.target.checked ? publicTimelineEvents.map(ev => ev.id) : [])}
+                            className="accent-vermilion w-3.5 h-3.5"
+                          />
+                        </th>
+                        <th className="px-2 py-2 font-normal w-20">年</th>
+                        <th className="px-2 py-2 font-normal">事件名</th>
+                        <th className="px-3 py-2 font-normal hidden md:table-cell">カテゴリ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {publicTimelineEvents.map(ev => {
+                        const checked = checkedEventIds.includes(ev.id)
+                        const alreadyAdded = currentEvents.some(e => e.year === ev.year && e.title === ev.title)
+                        return (
+                          <tr
+                            key={ev.id}
+                            onClick={() => {
+                              if (alreadyAdded) return
+                              setCheckedEventIds(prev =>
+                                prev.includes(ev.id) ? prev.filter(id => id !== ev.id) : [...prev, ev.id]
+                              )
+                            }}
+                            className={`border-b border-sepia-700/15 transition-colors ${
+                              alreadyAdded ? 'opacity-40 cursor-default' : 'hover:bg-ink-700/60 cursor-pointer'
+                            }`}
+                          >
+                            <td className="px-3 py-2.5 text-center">
+                              {alreadyAdded ? (
+                                <span className="text-vermilion text-xs">✓</span>
+                              ) : (
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {}}
+                                  className="accent-vermilion w-3.5 h-3.5 pointer-events-none"
+                                />
+                              )}
+                            </td>
+                            <td className="px-2 py-2.5 tabular-nums text-green-400 font-bold text-xs whitespace-nowrap">
+                              {ev.year}年
+                            </td>
+                            <td className="px-2 py-2 text-paper-200 text-xs font-medium">
+                              {ev.title}
+                            </td>
+                            <td className="px-3 py-2 hidden md:table-cell">
+                              {ev.category && <CategoryBadge category={ev.category} />}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
 

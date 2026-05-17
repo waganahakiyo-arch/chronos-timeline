@@ -14,7 +14,7 @@ export function buildQuery(
   whereClause: string,
   yearFrom: number,
   yearTo: number,
-  limit = 2000
+  limit = 5000
 ): string {
   return `
 SELECT ?event (YEAR(?date) AS ?year) ?label WHERE {
@@ -85,13 +85,86 @@ const CHINA_WHERE = `
   VALUES ?country { wd:Q29520 wd:Q865 wd:Q148 }
 `
 
+const KOREA_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305 wd:Q625994
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country { wd:Q884 wd:Q423 }
+`
+
+const SOUTH_ASIA_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305 wd:Q625994
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country {
+    wd:Q668 wd:Q902 wd:Q837 wd:Q854
+  }
+`
+
+const SOUTHEAST_ASIA_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country {
+    wd:Q881 wd:Q869 wd:Q252 wd:Q928 wd:Q836
+    wd:Q424 wd:Q819 wd:Q833 wd:Q334 wd:Q408 wd:Q664
+  }
+`
+
+const AMERICAS_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305 wd:Q625994
+    wd:Q3882219
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country {
+    wd:Q30 wd:Q16 wd:Q96 wd:Q155 wd:Q414
+    wd:Q298 wd:Q419 wd:Q739 wd:Q717 wd:Q241
+  }
+`
+
+const RUSSIA_WHERE = `
+  ?event wdt:P31 ?type .
+  VALUES ?type {
+    wd:Q198 wd:Q132821 wd:Q13418847 wd:Q350604
+    wd:Q178561 wd:Q7735147 wd:Q2912397
+    wd:Q1190554 wd:Q2001305 wd:Q625994
+    wd:Q3882219
+  }
+  ?event wdt:P17 ?country .
+  VALUES ?country {
+    wd:Q159 wd:Q212 wd:Q184 wd:Q232 wd:Q265
+    wd:Q227 wd:Q230
+  }
+`
+
 /** 年範囲を指定して全カテゴリのクエリを生成 */
 export function makeQueries(yearFrom: number, yearTo: number) {
   return [
-    { name: '日本の歴史',       query: buildQuery(JAPAN_WHERE,       yearFrom, yearTo) },
-    { name: 'ヨーロッパの歴史', query: buildQuery(EUROPE_WHERE,      yearFrom, yearTo) },
-    { name: '中東の歴史',       query: buildQuery(MIDDLE_EAST_WHERE, yearFrom, yearTo) },
-    { name: '中国の歴史',       query: buildQuery(CHINA_WHERE,       yearFrom, yearTo) },
+    { name: '日本の歴史',                   query: buildQuery(JAPAN_WHERE,          yearFrom, yearTo) },
+    { name: 'ヨーロッパの歴史',             query: buildQuery(EUROPE_WHERE,         yearFrom, yearTo) },
+    { name: '中東の歴史',                   query: buildQuery(MIDDLE_EAST_WHERE,    yearFrom, yearTo) },
+    { name: '中国の歴史',                   query: buildQuery(CHINA_WHERE,          yearFrom, yearTo) },
+    { name: '韓国・朝鮮の歴史',             query: buildQuery(KOREA_WHERE,          yearFrom, yearTo) },
+    { name: '南アジアの歴史',               query: buildQuery(SOUTH_ASIA_WHERE,     yearFrom, yearTo) },
+    { name: '東南アジア・オセアニアの歴史', query: buildQuery(SOUTHEAST_ASIA_WHERE, yearFrom, yearTo) },
+    { name: 'アメリカ大陸の歴史',           query: buildQuery(AMERICAS_WHERE,       yearFrom, yearTo) },
+    { name: 'ロシア・中央アジアの歴史',     query: buildQuery(RUSSIA_WHERE,         yearFrom, yearTo) },
   ]
 }
 

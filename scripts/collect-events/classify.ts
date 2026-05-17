@@ -30,7 +30,7 @@ export function getEra(year: number, category: string): Era {
     return '令和'
   }
 
-  // 世界史共通
+  // 世界史共通（韓国・南アジア・東南アジア・アメリカ・ロシア含む）
   if (year < -500)  return '古代'
   if (year < 500)   return '古代'
   if (year < 1500)  return '中世'

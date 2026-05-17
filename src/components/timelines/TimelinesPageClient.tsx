@@ -65,6 +65,19 @@ export default function TimelinesPageClient() {
     router.push('/')
   }
 
+  const togglePublic = async (tl: TimelineWithEvents) => {
+    const newVal = !tl.is_public
+    const { error } = await supabase
+      .from('timelines')
+      .update({ is_public: newVal })
+      .eq('id', tl.id)
+    if (!error) {
+      setMyTimelines(prev =>
+        prev.map(t => t.id === tl.id ? { ...t, is_public: newVal } : t)
+      )
+    }
+  }
+
   return (
     <div className="min-h-screen bg-ink-900">
       {/* ヘッダー */}
@@ -123,7 +136,7 @@ export default function TimelinesPageClient() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {myTimelines.map(tl => (
-                      <TimelineCard key={tl.id} timeline={tl} isOwn />
+                      <TimelineCard key={tl.id} timeline={tl} isOwn onTogglePublic={() => togglePublic(tl)} />
                     ))}
                   </div>
                 )}
@@ -162,17 +175,19 @@ export default function TimelinesPageClient() {
 function TimelineCard({
   timeline,
   isOwn,
+  onTogglePublic,
 }: {
   timeline: TimelineWithEvents
   isOwn: boolean
+  onTogglePublic?: () => void
 }) {
   const yearRange =
     timeline.events.length > 0
       ? `${timeline.events[0].year}年 〜 ${timeline.events[timeline.events.length - 1].year}年`
       : '（事件なし）'
 
-  return (
-    <div className="bg-ink-800 border border-sepia-700/30 rounded-sm p-5 hover:border-sepia-600/50 transition-colors paper-texture">
+  const cardContent = (
+    <>
       {/* ヘッダー */}
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-paper-100 font-bold leading-snug">{timeline.name}</h3>
@@ -194,11 +209,6 @@ function TimelineCard({
               </span>
             )
           })()}
-          {isOwn && (
-            <span className="px-2 py-0.5 text-xs border border-sepia-600/40 text-sepia-400 rounded-sm">
-              自分
-            </span>
-          )}
         </div>
       </div>
 
@@ -223,9 +233,9 @@ function TimelineCard({
         <span className="text-sepia-500 text-xs">
           {timeline.events.length} 件の事件
         </span>
-        <div className="text-right">
+        <div className="flex items-center gap-2">
           {timeline.is_public && timeline.public_until && (
-            <p className={`text-xs mb-0.5 ${new Date(timeline.public_until) <= new Date() ? 'text-sepia-600' : 'text-sepia-500'}`}>
+            <p className={`text-xs ${new Date(timeline.public_until) <= new Date() ? 'text-sepia-600' : 'text-sepia-500'}`}>
               〜{new Date(timeline.public_until).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
@@ -234,6 +244,38 @@ function TimelineCard({
           </span>
         </div>
       </div>
+
+      {/* 公開トグル（自分の年表のみ） */}
+      {isOwn && onTogglePublic && (
+        <div className="mt-3 pt-3 border-t border-sepia-700/20">
+          <button
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onTogglePublic() }}
+            className={`w-full py-1 text-xs tracking-wider border rounded-sm transition-colors ${
+              timeline.is_public
+                ? 'border-vermilion/40 text-vermilion hover:bg-vermilion/10'
+                : 'border-sepia-600/40 text-sepia-400 hover:border-vermilion/30 hover:text-vermilion/70'
+            }`}
+          >
+            {timeline.is_public ? '公開中 → 非公開にする' : '非公開 → 公開にする'}
+          </button>
+        </div>
+      )}
+    </>
+  )
+
+  if (!isOwn) {
+    return (
+      <Link href={`/timelines/${timeline.id}`}>
+        <div className="bg-ink-800 border border-sepia-700/30 rounded-sm p-5 hover:border-sepia-600/50 transition-colors paper-texture cursor-pointer">
+          {cardContent}
+        </div>
+      </Link>
+    )
+  }
+
+  return (
+    <div className="bg-ink-800 border border-sepia-700/30 rounded-sm p-5 hover:border-sepia-600/50 transition-colors paper-texture">
+      {cardContent}
     </div>
   )
 }

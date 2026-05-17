@@ -69,6 +69,10 @@ export default function ComparePageClient() {
   const [printOpt, setPrintOpt] = useState<{ bg: 'dark' | 'light'; orientation: 'portrait' | 'landscape' }>({ bg: 'light', orientation: 'landscape' })
   // モバイル用サイドバー開閉
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // 他ユーザーの公開年表
+  const [publicTimelines, setPublicTimelines] = useState<TimelineWithEvents[]>([])
+  const [publicFilter, setPublicFilter] = useState<'all' | 'user' | 'id'>('all')
+  const [publicFilterValue, setPublicFilterValue] = useState('')
 
   useEffect(() => {
     ;(async () => {
@@ -99,6 +103,31 @@ export default function ComparePageClient() {
       })
     )
     setTimelines(withEvents)
+
+    // 他ユーザーの公開年表を取得
+    const { data: pubTlData } = await supabase
+      .from('timelines')
+      .select('*')
+      .eq('is_public', true)
+      .neq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (pubTlData) {
+      const now = new Date()
+      const pubWithEvents: TimelineWithEvents[] = (
+        await Promise.all(
+          pubTlData.map(async tl => {
+            if (tl.public_until && new Date(tl.public_until) <= now) return null
+            const { data: evData } = await supabase
+              .from('timeline_events')
+              .select('*')
+              .eq('timeline_id', tl.id)
+              .order('year', { ascending: true })
+            return { ...tl, events: evData ?? [] }
+          })
+        )
+      ).filter((x): x is TimelineWithEvents => x !== null)
+      setPublicTimelines(pubWithEvents)
+    }
   }, [supabase])
 
   const toggleSelect = (id: string) => {
@@ -114,10 +143,21 @@ export default function ComparePageClient() {
     router.push('/')
   }
 
-  // 選択中の年表（選択順を保持）
+  // 自分 + 公開年表を結合して選択中を解決
+  const allTimelines = [...timelines, ...publicTimelines]
   const selectedTimelines = selectedIds
-    .map(id => timelines.find(tl => tl.id === id))
+    .map(id => allTimelines.find(tl => tl.id === id))
     .filter((tl): tl is TimelineWithEvents => tl != null)
+
+  // 公開年表フィルタ適用後リスト
+  const publicUserIds = Array.from(new Set(publicTimelines.map(tl => tl.user_id)))
+  const filteredPublicTimelines = (() => {
+    if (publicFilter === 'user' && publicFilterValue)
+      return publicTimelines.filter(tl => tl.user_id === publicFilterValue)
+    if (publicFilter === 'id' && publicFilterValue)
+      return publicTimelines.filter(tl => tl.id.startsWith(publicFilterValue))
+    return publicTimelines
+  })()
 
   // 全選択年表のユニーク日付キーを昇順で集約
   // M/D形式(3)の場合は時刻ごとに別行にする
@@ -318,42 +358,127 @@ export default function ComparePageClient() {
             </div>
           </div>
 
-          <div className="flex-1 p-2 space-y-1">
-            {loading ? (
-              <p className="text-sepia-600 text-xs px-2 py-4 text-center">読み込み中...</p>
-            ) : timelines.length === 0 ? (
-              <div className="text-center px-2 py-6">
-                <p className="text-sepia-600 text-xs">年表がありません</p>
-                <Link href="/app" className="mt-2 inline-block text-xs text-vermilion hover:text-vermilion-light transition-colors">
-                  作成する →
-                </Link>
-              </div>
-            ) : (
-              timelines.map((tl, i) => {
-                const selected = selectedIds.includes(tl.id)
-                const colorIdx = selectedIds.indexOf(tl.id)
-                const color = colorIdx >= 0 ? COLUMN_COLORS[colorIdx % COLUMN_COLORS.length] : null
-                return (
+          <div className="flex-1 overflow-y-auto">
+            {/* ── 自分の年表 ── */}
+            <div className="px-3 pt-3 pb-1">
+              <p className="text-[10px] text-sepia-600 tracking-widest uppercase mb-1.5">自分の年表</p>
+            </div>
+            <div className="px-2 pb-2 space-y-1">
+              {loading ? (
+                <p className="text-sepia-600 text-xs px-2 py-4 text-center">読み込み中...</p>
+              ) : timelines.length === 0 ? (
+                <div className="text-center px-2 py-4">
+                  <p className="text-sepia-600 text-xs">年表がありません</p>
+                  <Link href="/app" className="mt-1.5 inline-block text-xs text-vermilion hover:text-vermilion-light transition-colors">
+                    作成する →
+                  </Link>
+                </div>
+              ) : (
+                timelines.map(tl => {
+                  const selected = selectedIds.includes(tl.id)
+                  const colorIdx = selectedIds.indexOf(tl.id)
+                  const color = colorIdx >= 0 ? COLUMN_COLORS[colorIdx % COLUMN_COLORS.length] : null
+                  return (
+                    <button
+                      key={tl.id}
+                      onClick={() => toggleSelect(tl.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-sm text-xs border transition-colors ${
+                        selected && color
+                          ? `${color.bg} ${color.border} ${color.text}`
+                          : 'border-sepia-700/30 text-sepia-300 hover:bg-ink-700/60 hover:text-paper-200 hover:border-sepia-600/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {selected && color && (
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color.bg} border ${color.border}`} />
+                        )}
+                        <span className="font-medium truncate">{tl.name}</span>
+                      </div>
+                      <div className="text-sepia-600 mt-0.5 ml-0.5">{tl.events.length}件</div>
+                    </button>
+                  )
+                })
+              )}
+            </div>
+
+            {/* ── 公開年表 ── */}
+            <div className="border-t border-sepia-700/30 px-3 pt-3 pb-1">
+              <p className="text-[10px] text-sepia-600 tracking-widest uppercase mb-2">公開年表</p>
+              {/* フィルタ選択 */}
+              <div className="flex gap-1 mb-2">
+                {(['all', 'user', 'id'] as const).map(f => (
                   <button
-                    key={tl.id}
-                    onClick={() => toggleSelect(tl.id)}
-                    className={`w-full text-left px-3 py-2.5 rounded-sm text-xs border transition-colors ${
-                      selected && color
-                        ? `${color.bg} ${color.border} ${color.text}`
-                        : 'border-sepia-700/30 text-sepia-300 hover:bg-ink-700/60 hover:text-paper-200 hover:border-sepia-600/50'
+                    key={f}
+                    onClick={() => { setPublicFilter(f); setPublicFilterValue('') }}
+                    className={`flex-1 py-1 text-[10px] border rounded-sm transition-colors ${
+                      publicFilter === f
+                        ? 'border-sepia-600/60 bg-sepia-700/40 text-paper-200'
+                        : 'border-sepia-700/30 text-sepia-500 hover:text-sepia-300'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5">
-                      {selected && color && (
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color.bg} border ${color.border}`} />
-                      )}
-                      <span className="font-medium truncate">{tl.name}</span>
-                    </div>
-                    <div className="text-sepia-600 mt-0.5 ml-0.5">{tl.events.length}件</div>
+                    {f === 'all' ? '全表示' : f === 'user' ? 'ユーザー' : 'ID指定'}
                   </button>
-                )
-              })
-            )}
+                ))}
+              </div>
+              {/* フィルタ入力 */}
+              {publicFilter === 'user' && publicUserIds.length > 0 && (
+                <select
+                  value={publicFilterValue}
+                  onChange={e => setPublicFilterValue(e.target.value)}
+                  className="w-full px-2 py-1 text-[10px] bg-ink-900 border border-sepia-700/40 text-sepia-300 rounded-sm mb-2"
+                >
+                  <option value="">-- ユーザーを選択 --</option>
+                  {publicUserIds.map((uid, i) => (
+                    <option key={uid} value={uid}>
+                      ユーザー {i + 1}（{uid.slice(0, 8)}…）
+                    </option>
+                  ))}
+                </select>
+              )}
+              {publicFilter === 'id' && (
+                <input
+                  type="text"
+                  value={publicFilterValue}
+                  onChange={e => setPublicFilterValue(e.target.value)}
+                  placeholder="年表IDを入力..."
+                  className="w-full px-2 py-1 text-[10px] bg-ink-900 border border-sepia-700/40 text-sepia-300 placeholder-sepia-600 rounded-sm mb-2 outline-none focus:border-sepia-500/60"
+                />
+              )}
+            </div>
+            <div className="px-2 pb-3 space-y-1">
+              {filteredPublicTimelines.length === 0 ? (
+                <p className="text-sepia-700 text-[10px] px-2 py-3 text-center">公開年表がありません</p>
+              ) : (
+                filteredPublicTimelines.map(tl => {
+                  const selected = selectedIds.includes(tl.id)
+                  const colorIdx = selectedIds.indexOf(tl.id)
+                  const color = colorIdx >= 0 ? COLUMN_COLORS[colorIdx % COLUMN_COLORS.length] : null
+                  const userIdx = publicUserIds.indexOf(tl.user_id)
+                  return (
+                    <button
+                      key={tl.id}
+                      onClick={() => toggleSelect(tl.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-sm text-xs border transition-colors ${
+                        selected && color
+                          ? `${color.bg} ${color.border} ${color.text}`
+                          : 'border-sepia-700/30 text-sepia-300 hover:bg-ink-700/60 hover:text-paper-200 hover:border-sepia-600/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {selected && color && (
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color.bg} border ${color.border}`} />
+                        )}
+                        <span className="font-medium truncate">{tl.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 ml-0.5">
+                        <span className="text-sepia-600">{tl.events.length}件</span>
+                        <span className="text-sepia-700">ユーザー {userIdx + 1}</span>
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+            </div>
           </div>
         </aside>
 
