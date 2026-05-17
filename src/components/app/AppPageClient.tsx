@@ -843,6 +843,13 @@ export default function AppPageClient() {
                   e.target.value = ''
                 }}
               />
+              <Link
+                href="/import-format"
+                target="_blank"
+                className="block mt-1 text-center text-[10px] text-sepia-600 hover:text-sepia-400 transition-colors tracking-wider"
+              >
+                インポートファイルのフォーマットを確認 →
+              </Link>
             </div>
 
             {currentEvents.length === 0 ? (
